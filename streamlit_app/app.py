@@ -16,6 +16,7 @@ import av
 import cv2
 import numpy as np
 import pandas as pd
+import requests
 import streamlit as st
 from PIL import Image
 from streamlit_webrtc import WebRtcMode, webrtc_streamer
@@ -93,6 +94,21 @@ def resolve_model_path(local_path: str, model_url: str, expected_checksum: str) 
 @st.cache_resource(show_spinner=False)
 def load_model(model_path: str) -> YOLO:
     return YOLO(model_path)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cloudflare_ice_servers(turn_key_id: str, turn_api_token: str) -> list[dict]:
+    response = requests.post(
+        f"https://rtc.live.cloudflare.com/v1/turn/keys/{turn_key_id}/credentials/generate-ice-servers",
+        headers={"Authorization": f"Bearer {turn_api_token}"},
+        json={"ttl": 7200},
+        timeout=15,
+    )
+    response.raise_for_status()
+    ice_servers = response.json().get("iceServers")
+    if not isinstance(ice_servers, list) or not ice_servers:
+        raise RuntimeError("Cloudflare tidak mengembalikan konfigurasi ICE server.")
+    return ice_servers
 
 
 def normalized_label(raw_label: str) -> str:
@@ -614,6 +630,16 @@ with camera_tab:
             "Frame diproses langsung dan tidak disimpan oleh aplikasi. Kecepatan bergantung pada perangkat dan server."
         )
 
+        turn_key_id = setting("CLOUDFLARE_TURN_KEY_ID")
+        turn_api_token = setting("CLOUDFLARE_TURN_KEY_API_TOKEN")
+        turn_is_configured = bool(turn_key_id and turn_api_token)
+        if turn_is_configured:
+            st.success("TURN aktif · koneksi kamera menggunakan relay Cloudflare.")
+        else:
+            st.warning(
+                "TURN belum dikonfigurasi. Kamera langsung dapat gagal tersambung pada Streamlit Community Cloud."
+            )
+
     def live_video_callback(frame: av.VideoFrame) -> av.VideoFrame:
         image_bgr = frame.to_ndarray(format="bgr24")
         result = predict_frame(model, image_bgr, camera_confidence, camera_image_size)
@@ -621,13 +647,20 @@ with camera_tab:
         return av.VideoFrame.from_ndarray(annotated, format="bgr24")
 
     with camera_stream_col:
-        turn_is_configured = bool(
-            os.getenv("CLOUDFLARE_TURN_KEY_ID")
-            and os.getenv("CLOUDFLARE_TURN_KEY_API_TOKEN")
-        )
-        rtc_configuration = None if turn_is_configured else {
-            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-        }
+        if turn_is_configured:
+            try:
+                rtc_configuration = {
+                    "iceServers": cloudflare_ice_servers(turn_key_id, turn_api_token)
+                }
+            except Exception as exc:
+                st.error(f"Kredensial TURN tidak dapat digunakan: {exc}")
+                rtc_configuration = {
+                    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+                }
+        else:
+            rtc_configuration = {
+                "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+            }
         webrtc_streamer(
             key="ppe-live-camera",
             mode=WebRtcMode.SENDRECV,
