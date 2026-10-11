@@ -1,0 +1,18 @@
+[theme]
+primaryColor = "#1f6b4f"
+backgroundColor = "#f6f8f5"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#17251f"
+font = "sans serif"
+
+[server]
+maxUploadSize = 10
+enableCORS = true
+enableXsrfProtection = true
+xsrfCookieSameSite = "none"
+corsAllowedOrigins = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "https://imagination-remarkable-truth-mothers.trycloudflare.com",
+    "https://ppe-vision-dashboard.onrender.com",
+]
