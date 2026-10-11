@@ -5,7 +5,7 @@
     <div>
         <p class="eyebrow">Inference demo</p>
         <h1>Uji PPE detection</h1>
-        <p>Unggah gambar untuk mendeteksi Helm, Masker, dan People.</p>
+        <p>Deteksi Helm, Masker, dan People melalui gambar, video, atau kamera langsung.</p>
     </div>
 </div>
 
@@ -23,7 +23,7 @@
             src="{{ $streamlitEmbedUrl }}"
             title="Demo deteksi PPE"
             loading="eager"
-            allow="camera"
+            allow="camera; autoplay; fullscreen"
         ></iframe>
         <noscript>
             <p>JavaScript perlu diaktifkan untuk menjalankan demo deteksi.</p>
