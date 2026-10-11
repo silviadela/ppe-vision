@@ -38,9 +38,9 @@ Buka `http://127.0.0.1:8000`. Database lokal memakai SQLite.
 
 ## Model Colab yang terintegrasi
 
-Project lokal telah menggunakan checkpoint **PPE YOLO11s Best Config** dengan kelas sumber `Hardhat`, `Mask`, dan `Person`. API menormalkannya menjadi `helm`, `masker`, dan `people`. Konfigurasi dan checksum model tercatat di `inference_service/models/model-info.json`.
+Project menggunakan checkpoint **PPE YOLO11s New Dataset v1** dengan kelas sumber `Helmet`, `Mask`, dan `Person`. API menormalkannya menjadi `helm`, `masker`, dan `people`. Konfigurasi dan checksum model tercatat di `inference_service/models/model-info.json`.
 
-Metric checkpoint terbaik (epoch 50): precision 0.72450, recall 0.87209, mAP50 0.77007, dan mAP50-95 0.54627. Grafik asli tersedia di halaman detail eksperimen.
+Metric checkpoint terbaik (epoch 60): precision 0.93930, recall 0.90805, mAP50 0.95095, dan mAP50-95 0.67852. Grafik asli tersedia di halaman detail eksperimen.
 
 File model berada di `inference_service/models/best.pt` dan sudah diizinkan oleh `.gitignore` untuk ikut repository. Jika project dipindahkan tanpa file model, lakukan langkah berikut.
 

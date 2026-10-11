@@ -9,51 +9,53 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $run = TrainingRun::where('dataset_name', 'PPE Detection v1')
-            ->where('notes', 'like', 'Data contoh%')
-            ->first() ?? TrainingRun::firstOrNew(['name' => 'PPE YOLO11s Best Config']);
+        $run = TrainingRun::where('model_artifact_path', 'inference_service/models/best.pt')
+            ->first() ?? TrainingRun::whereIn('name', [
+                'PPE YOLO11s Best Config',
+                'PPE YOLO11s New Dataset v1',
+            ])->first() ?? new TrainingRun;
 
         $run->fill([
-            'name' => 'PPE YOLO11s Best Config',
+            'name' => 'PPE YOLO11s New Dataset v1',
             'model_version' => 'YOLO11s',
             'status' => 'completed',
-            'dataset_name' => 'Personal Protective Equipment - Combined Model 1',
+            'dataset_name' => 'Person Mask Helmet v2 (resplit)',
             'epochs' => 60,
             'batch_size' => 32,
             'image_size' => 640,
             'optimizer' => 'AdamW',
             'device' => 'Google Colab GPU',
-            'finished_at' => '2026-10-11 09:26:22',
+            'finished_at' => '2026-10-11 12:26:55',
             'metrics' => [
-                'precision' => .72450,
-                'recall' => .87209,
-                'map50' => .77007,
-                'map50_95' => .54627,
-                'val_box_loss' => 1.12413,
-                'val_cls_loss' => 1.41645,
-                'val_dfl_loss' => 1.05325,
-                'fitness' => .54627,
-                'best_epoch' => 50,
+                'precision' => .93930,
+                'recall' => .90805,
+                'map50' => .95095,
+                'map50_95' => .67852,
+                'val_box_loss' => 1.00014,
+                'val_cls_loss' => .49519,
+                'val_dfl_loss' => 1.05783,
+                'fitness' => .70576,
+                'best_epoch' => 60,
             ],
             'per_class_metrics' => [
-                'helm' => ['source_class' => 'Hardhat'],
+                'helm' => ['source_class' => 'Helmet'],
                 'masker' => ['source_class' => 'Mask'],
                 'people' => ['source_class' => 'Person'],
             ],
             'training_history' => $this->readTrainingHistory(),
             'model_artifact_path' => 'inference_service/models/best.pt',
-            'results_plot_path' => 'training/ppe-yolo11s-bestconfig/results.png',
-            'confusion_matrix_path' => 'training/ppe-yolo11s-bestconfig/confusion_matrix.png',
-            'confusion_matrix_normalized_path' => 'training/ppe-yolo11s-bestconfig/confusion_matrix_normalized.png',
-            'pr_curve_path' => 'training/ppe-yolo11s-bestconfig/BoxPR_curve.png',
-            'notes' => 'Hasil training asli Google Colab. Kelas model Hardhat, Mask, Person dinormalisasi oleh inference API menjadi Helm, Masker, People. Metrics per kelas tidak tersedia di artefak training.',
+            'results_plot_path' => 'training/ppe-yolo11s-newdataset-v1/results.png',
+            'confusion_matrix_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix.png',
+            'confusion_matrix_normalized_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix_normalized.png',
+            'pr_curve_path' => 'training/ppe-yolo11s-newdataset-v1/BoxPR_curve.png',
+            'notes' => 'Hasil training Google Colab menggunakan dataset baru. Kelas model Helmet, Mask, Person dinormalisasi menjadi Helm, Masker, People. Metrics per kelas tidak tersedia di artefak training.',
         ]);
         $run->save();
     }
 
     private function readTrainingHistory(): array
     {
-        $handle = fopen(database_path('data/ppe_yolo11s_bestconfig_results.csv'), 'r');
+        $handle = fopen(database_path('data/ppe_yolo11s_newdataset_v1_results.csv'), 'r');
         if ($handle === false) {
             return [];
         }
