@@ -78,16 +78,17 @@ Mode video memerlukan `ffmpeg` agar hasil dapat diputar sebagai MP4 di browser. 
 
 ## Deployment gratis
 
-### 1. Laravel di Render
+### 1. Laravel di alwaysdata
 
-Project sudah menyediakan `Dockerfile`, `render.yaml`, konfigurasi Apache, migrasi, dan seeder otomatis.
+Laravel adalah aplikasi utama dan menggunakan alamat `https://NAMA_AKUN.alwaysdata.net`. Deployment alwaysdata memakai PHP 8.3 dan MariaDB persisten; Docker dan kartu kredit tidak diperlukan.
 
-1. Simpan project pada repository GitHub.
-2. Di Render pilih **New > Blueprint** lalu hubungkan repository.
-3. Render membaca `render.yaml` dan membuat service `ppe-vision-dashboard`.
-4. Isi environment variable `STREAMLIT_DEMO_URL` setelah Streamlit memperoleh URL publik.
+Repository menyediakan:
 
-Render Free menggunakan filesystem sementara. SQLite, riwayat upload, dan file hasil deteksi dapat kembali ke data awal setelah service tidur atau restart. Konfigurasi ini sesuai untuk assessment/demo, bukan penyimpanan production.
+- `.env.alwaysdata.example` untuk konfigurasi production;
+- `deploy/alwaysdata/deploy.sh` untuk instalasi dan pembaruan;
+- [`ALWAYSDATA_DEPLOY.md`](ALWAYSDATA_DEPLOY.md) untuk panduan lengkap.
+
+Root situs alwaysdata wajib diarahkan ke `/home/NAMA_AKUN/www/ppe-vision/public`. Database dibuat melalui menu **Databases > MySQL** dan kredensialnya hanya disimpan pada `.env` di server.
 
 ### 2. Demo di Streamlit Community Cloud
 
@@ -95,7 +96,7 @@ Render Free menggunakan filesystem sementara. SQLite, riwayat upload, dan file h
 2. Gunakan entrypoint `streamlit_app/app.py`.
 3. Checkpoint `inference_service/models/best.pt` berukuran sekitar 19 MB dan disiapkan agar dapat ikut repository. Gunakan repository private jika checkpoint tidak boleh dibagikan. Sebagai alternatif, hapus pengecualian model dari `.gitignore`, host model secara privat, lalu isi `YOLO_MODEL_URL` dan `YOLO_MODEL_SHA256` pada Streamlit Secrets.
 
-Setelah layanan inferensi aktif, salin URL `https://...streamlit.app` ke variable `STREAMLIT_DEMO_URL` di Render. Dashboard otomatis menambahkan mode embed dan menampilkannya di menu **Demo Deteksi**. Link yang dibagikan kepada penguji cukup URL Render, misalnya `https://ppe-vision-dashboard.onrender.com`.
+Setelah layanan inferensi aktif, simpan URL `https://...streamlit.app` pada `STREAMLIT_DEMO_URL` di server alwaysdata. Dashboard otomatis menambahkan mode embed dan menampilkannya di menu **Demo Deteksi**. Link yang dibagikan kepada penguji cukup URL Laravel `https://NAMA_AKUN.alwaysdata.net`.
 
 ## Ringkasan dengan Ollama (opsional)
 
