@@ -1,10 +1,10 @@
 # PPE Vision
 
-Dashboard Laravel untuk mencatat konfigurasi training YOLO, menampilkan precision/recall/mAP, membuat ringkasan metrics, dan mendemokan deteksi kelas **Helm, Masker, People** melalui gambar, video, serta kamera langsung.
+Dashboard Laravel untuk mencatat konfigurasi training YOLO, menampilkan precision/recall/mAP, membuat ringkasan metrics, dan mendemokan deteksi kelas **Helm, Masker, People** melalui gambar, video, serta foto kamera.
 
 ## Arsitektur aplikasi
 
-Pengguna cukup membuka satu URL dashboard. Halaman **Demo Deteksi** menampilkan panel inferensi secara langsung di dalam layout aplikasi, sehingga tidak perlu berpindah tab atau membuka link kedua. Panel menyediakan tiga mode: upload gambar, upload video, dan kamera langsung berbasis WebRTC.
+Pengguna cukup membuka satu URL dashboard. Halaman **Demo Deteksi** menampilkan panel inferensi secara langsung di dalam layout aplikasi, sehingga tidak perlu berpindah tab atau membuka link kedua. Panel menyediakan tiga mode: upload gambar, upload video, dan ambil foto dari kamera.
 
 ```text
 Pengguna
@@ -74,14 +74,7 @@ STREAMLIT_DEMO_URL=http://127.0.0.1:8501
 
 Kemudian jalankan `php artisan config:clear`. Buka menu **Demo Deteksi**; panel upload dan hasil inferensi akan langsung tampil di halaman tersebut.
 
-Mode video memerlukan `ffmpeg` agar hasil dapat diputar sebagai MP4 di browser. Streamlit Community Cloud memasang dependensi sistem dari `packages.txt`. Mode kamera langsung memerlukan HTTPS dan izin kamera browser; layanan online menggunakan STUN WebRTC secara default.
-
-Jika kamera gagal terhubung pada jaringan yang ketat, buat kredensial Cloudflare Realtime TURN dan tambahkan dua secret berikut pada Streamlit Community Cloud. `streamlit-webrtc` akan menggunakannya secara otomatis:
-
-```toml
-CLOUDFLARE_TURN_KEY_ID = "..."
-CLOUDFLARE_TURN_KEY_API_TOKEN = "..."
-```
+Mode video memerlukan `ffmpeg` agar hasil dapat diputar sebagai MP4 di browser. Streamlit Community Cloud memasang dependensi sistem dari `packages.txt`. Mode kamera menggunakan pengambilan satu foto sehingga tidak memerlukan STUN/TURN; pengguna cukup memberi izin kamera lalu menekan **Take Photo**.
 
 ## Deployment gratis
 

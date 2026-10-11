@@ -12,14 +12,11 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import urlparse
 
-import av
 import cv2
 import numpy as np
 import pandas as pd
-import requests
 import streamlit as st
 from PIL import Image
-from streamlit_webrtc import WebRtcMode, webrtc_streamer
 from ultralytics import YOLO
 
 
@@ -94,21 +91,6 @@ def resolve_model_path(local_path: str, model_url: str, expected_checksum: str) 
 @st.cache_resource(show_spinner=False)
 def load_model(model_path: str) -> YOLO:
     return YOLO(model_path)
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def cloudflare_ice_servers(turn_key_id: str, turn_api_token: str) -> list[dict]:
-    response = requests.post(
-        f"https://rtc.live.cloudflare.com/v1/turn/keys/{turn_key_id}/credentials/generate-ice-servers",
-        headers={"Authorization": f"Bearer {turn_api_token}"},
-        json={"ttl": 7200},
-        timeout=15,
-    )
-    response.raise_for_status()
-    ice_servers = response.json().get("iceServers")
-    if not isinstance(ice_servers, list) or not ice_servers:
-        raise RuntimeError("Cloudflare tidak mengembalikan konfigurasi ICE server.")
-    return ice_servers
 
 
 def normalized_label(raw_label: str) -> str:
@@ -423,7 +405,7 @@ model_checksum = setting("YOLO_MODEL_SHA256")
 
 st.markdown('<div class="demo-kicker">Pengujian model</div>', unsafe_allow_html=True)
 st.markdown('<h1 class="demo-title">Deteksi PPE dengan YOLO</h1>', unsafe_allow_html=True)
-st.write("Pilih gambar, video, atau kamera langsung untuk mendeteksi perlengkapan keselamatan.")
+st.write("Pilih gambar, video, atau foto dari kamera untuk mendeteksi perlengkapan keselamatan.")
 st.markdown(
     '<div class="class-list"><span>Helm</span><span>Masker</span><span>People</span></div>',
     unsafe_allow_html=True,
@@ -442,7 +424,7 @@ source_classes = [str(name) for name in model.names.values()]
 display_classes = [normalized_label(name).title() for name in source_classes]
 st.success(f"Model siap · kelas: {', '.join(display_classes)}")
 
-image_tab, video_tab, camera_tab = st.tabs(["📷 Gambar", "🎬 Video", "📹 Kamera langsung"])
+image_tab, video_tab, camera_tab = st.tabs(["📷 Gambar", "🎬 Video", "📸 Kamera"])
 
 with image_tab:
     control_col, preview_col = st.columns([0.42, 0.58], gap="large")
@@ -610,8 +592,8 @@ with video_tab:
                     )
 
 with camera_tab:
-    st.subheader("Deteksi kamera langsung")
-    camera_control_col, camera_stream_col = st.columns([0.32, 0.68], gap="large")
+    st.subheader("Ambil foto dari kamera")
+    camera_control_col, camera_capture_col = st.columns([0.32, 0.68], gap="large")
     with camera_control_col:
         camera_confidence = st.slider(
             "Confidence threshold", 0.05, 0.95, 0.20, 0.05, key="camera-confidence"
@@ -621,54 +603,64 @@ with camera_tab:
             options=[320, 640],
             value=640,
             key="camera-size",
-            help="Gunakan 320 jika kamera terasa lambat pada CPU.",
+            help="Gunakan 320 jika proses terasa lambat pada CPU.",
         )
         st.info(
-            "Tekan START lalu izinkan akses kamera. Kamera memerlukan HTTPS saat aplikasi dibuka secara online."
+            "Izinkan akses kamera, arahkan ke objek PPE, lalu tekan Take Photo satu kali."
         )
         st.caption(
-            "Frame diproses langsung dan tidak disimpan oleh aplikasi. Kecepatan bergantung pada perangkat dan server."
+            "Foto langsung diproses oleh model dan tidak disimpan permanen oleh aplikasi."
         )
 
-        turn_key_id = setting("CLOUDFLARE_TURN_KEY_ID")
-        turn_api_token = setting("CLOUDFLARE_TURN_KEY_API_TOKEN")
-        turn_is_configured = bool(turn_key_id and turn_api_token)
-        if turn_is_configured:
-            st.success("TURN aktif · koneksi kamera menggunakan relay Cloudflare.")
+    with camera_capture_col:
+        camera_photo = st.camera_input(
+            "Kamera PPE",
+            key="ppe-camera-photo",
+        )
+
+    if camera_photo is not None:
+        try:
+            captured_image = Image.open(camera_photo).convert("RGB")
+            captured_bgr = np.asarray(captured_image)[:, :, ::-1]
+            started_at = time.perf_counter()
+            with st.spinner("Model sedang mendeteksi foto kamera..."):
+                camera_result = predict_frame(
+                    model,
+                    captured_bgr,
+                    camera_confidence,
+                    camera_image_size,
+                )
+            elapsed_ms = (time.perf_counter() - started_at) * 1000
+            camera_rows = result_rows(camera_result)
+        except Exception as exc:
+            st.error(f"Foto kamera gagal diproses: {exc}")
         else:
-            st.warning(
-                "TURN belum dikonfigurasi. Kamera langsung dapat gagal tersambung pada Streamlit Community Cloud."
+            st.markdown("---")
+            st.subheader("Hasil deteksi kamera")
+            metric_a, metric_b, metric_c = st.columns(3)
+            metric_a.metric("Objek terdeteksi", len(camera_rows))
+            metric_b.metric(
+                "Waktu inferensi model",
+                f"{float(camera_result.speed.get('inference', 0)):.1f} ms",
             )
+            metric_c.metric("Total proses", f"{elapsed_ms:.1f} ms")
 
-    def live_video_callback(frame: av.VideoFrame) -> av.VideoFrame:
-        image_bgr = frame.to_ndarray(format="bgr24")
-        result = predict_frame(model, image_bgr, camera_confidence, camera_image_size)
-        annotated = draw_result(image_bgr, result)
-        return av.VideoFrame.from_ndarray(annotated, format="bgr24")
-
-    with camera_stream_col:
-        if turn_is_configured:
-            try:
-                rtc_configuration = {
-                    "iceServers": cloudflare_ice_servers(turn_key_id, turn_api_token)
-                }
-            except Exception as exc:
-                st.error(f"Kredensial TURN tidak dapat digunakan: {exc}")
-                rtc_configuration = {
-                    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-                }
-        else:
-            rtc_configuration = {
-                "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-            }
-        webrtc_streamer(
-            key="ppe-live-camera",
-            mode=WebRtcMode.SENDRECV,
-            video_frame_callback=live_video_callback,
-            media_stream_constraints={"video": True, "audio": False},
-            rtc_configuration=rtc_configuration,
-            async_processing=True,
-        )
+            camera_result_col, camera_detail_col = st.columns([0.62, 0.38], gap="large")
+            with camera_result_col:
+                annotated = draw_result(captured_bgr, camera_result)
+                st.image(
+                    annotated[:, :, ::-1],
+                    caption="Hasil deteksi dari kamera",
+                    width="stretch",
+                )
+            with camera_detail_col:
+                render_summary(camera_rows)
+                if camera_rows:
+                    st.dataframe(
+                        dataframe_for_display(camera_rows),
+                        hide_index=True,
+                        width="stretch",
+                    )
 
 st.markdown("---")
 st.caption("PPE Vision · Deteksi Helm, Masker, dan People")

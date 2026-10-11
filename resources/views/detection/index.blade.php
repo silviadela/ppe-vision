@@ -5,7 +5,7 @@
     <div>
         <p class="eyebrow">Inference demo</p>
         <h1>Uji PPE detection</h1>
-        <p>Deteksi Helm, Masker, dan People melalui gambar, video, atau kamera langsung.</p>
+        <p>Deteksi Helm, Masker, dan People melalui gambar, video, atau foto kamera.</p>
     </div>
 </div>
 
