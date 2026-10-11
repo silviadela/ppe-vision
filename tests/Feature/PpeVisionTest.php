@@ -146,6 +146,30 @@ class PpeVisionTest extends TestCase
         Storage::disk('public')->assertExists($detection->output_path);
     }
 
+    public function test_web_installer_is_hidden_without_a_token(): void
+    {
+        config(['deployment.infinityfree_install_token' => null]);
+
+        $this->get('/install')->assertNotFound();
+    }
+
+    public function test_web_installer_runs_migrations_and_seeder_with_the_correct_token(): void
+    {
+        config(['deployment.infinityfree_install_token' => 'test-install-token']);
+
+        $this->get('/install')->assertOk()->assertSee('Instalasi database');
+        $this->post('/install', ['install_token' => 'wrong-token'])
+            ->assertSessionHasErrors('install_token');
+
+        $this->post('/install', ['install_token' => 'test-install-token'])
+            ->assertOk()
+            ->assertSee('Instalasi berhasil');
+
+        $this->assertDatabaseHas('training_runs', [
+            'name' => 'PPE YOLO11s New Dataset v1',
+        ]);
+    }
+
     private function completedRun(): TrainingRun
     {
         return TrainingRun::create([

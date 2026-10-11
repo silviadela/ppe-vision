@@ -78,17 +78,18 @@ Mode video memerlukan `ffmpeg` agar hasil dapat diputar sebagai MP4 di browser. 
 
 ## Deployment gratis
 
-### 1. Laravel di alwaysdata
+### 1. Laravel di InfinityFree
 
-Laravel adalah aplikasi utama dan menggunakan alamat `https://NAMA_AKUN.alwaysdata.net`. Deployment alwaysdata memakai PHP 8.3 dan MariaDB persisten; Docker dan kartu kredit tidak diperlukan.
+Laravel adalah aplikasi utama dan menggunakan subdomain gratis InfinityFree. Deployment memakai PHP dan MySQL persisten tanpa kartu kredit. Karena paket gratis tidak menyediakan SSH, Composer, atau NPM, semua dependency dibangun lebih dahulu di komputer.
 
 Repository menyediakan:
 
-- `.env.alwaysdata.example` untuk konfigurasi production;
-- `deploy/alwaysdata/deploy.sh` untuk instalasi dan pembaruan;
-- [`ALWAYSDATA_DEPLOY.md`](ALWAYSDATA_DEPLOY.md) untuk panduan lengkap.
+- `.env.infinityfree.example` untuk konfigurasi production;
+- `deploy/infinityfree/build-package.ps1` untuk membuat paket siap-upload;
+- halaman instalasi database satu kali di `/install`;
+- [`INFINITYFREE_DEPLOY.md`](INFINITYFREE_DEPLOY.md) untuk panduan lengkap.
 
-Root situs alwaysdata wajib diarahkan ke `/home/NAMA_AKUN/www/ppe-vision/public`. Database dibuat melalui menu **Databases > MySQL** dan kredensialnya hanya disimpan pada `.env` di server.
+Seluruh isi paket diunggah ke `htdocs`. `.htaccess` root mengarahkan request ke folder Laravel `public`, sedangkan kredensial MySQL hanya disimpan dalam `.env` server.
 
 ### 2. Demo di Streamlit Community Cloud
 
@@ -96,7 +97,7 @@ Root situs alwaysdata wajib diarahkan ke `/home/NAMA_AKUN/www/ppe-vision/public`
 2. Gunakan entrypoint `streamlit_app/app.py`.
 3. Checkpoint `inference_service/models/best.pt` berukuran sekitar 19 MB dan disiapkan agar dapat ikut repository. Gunakan repository private jika checkpoint tidak boleh dibagikan. Sebagai alternatif, hapus pengecualian model dari `.gitignore`, host model secara privat, lalu isi `YOLO_MODEL_URL` dan `YOLO_MODEL_SHA256` pada Streamlit Secrets.
 
-Setelah layanan inferensi aktif, simpan URL `https://...streamlit.app` pada `STREAMLIT_DEMO_URL` di server alwaysdata. Dashboard otomatis menambahkan mode embed dan menampilkannya di menu **Demo Deteksi**. Link yang dibagikan kepada penguji cukup URL Laravel `https://NAMA_AKUN.alwaysdata.net`.
+Setelah layanan inferensi aktif, simpan URL `https://...streamlit.app` pada `STREAMLIT_DEMO_URL` di `.env` InfinityFree. Dashboard otomatis menambahkan mode embed dan menampilkannya di menu **Demo Deteksi**. Link yang dibagikan kepada penguji cukup URL Laravel dari InfinityFree.
 
 ## Ringkasan dengan Ollama (opsional)
 

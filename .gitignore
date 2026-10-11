@@ -13,13 +13,15 @@
 .env
 .env.backup
 .env.production
-!.env.alwaysdata.example
+!.env.infinityfree.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+/deploy/infinityfree/package/
+/deploy/infinityfree/ppe-vision-infinityfree.zip
 /auth.json
 /.fleet
 /.idea
