@@ -37,7 +37,13 @@ class InstallationController extends Controller
         }
 
         try {
-            Artisan::call('migrate', ['--force' => true]);
+            // DDL MySQL tidak selalu dibatalkan ketika proses hosting terputus.
+            // Pada instalasi baru, bersihkan tabel parsial sebelum mengulang migrasi.
+            $migrationCommand = Schema::hasTable('training_runs')
+                ? 'migrate'
+                : 'migrate:fresh';
+
+            Artisan::call($migrationCommand, ['--force' => true]);
             $migrationOutput = trim(Artisan::output());
 
             Artisan::call('db:seed', ['--force' => true]);

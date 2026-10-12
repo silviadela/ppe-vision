@@ -1,2 +1,6 @@
 RewriteEngine On
-RewriteRule (.*) /public/$1 [L]
+
+# Arahkan document root InfinityFree ke folder public Laravel,
+# tetapi jangan menulis ulang permintaan yang sudah berada di sana.
+RewriteCond %{REQUEST_URI} !^/public(?:/|$) [NC]
+RewriteRule ^(.*)$ public/$1 [L]
