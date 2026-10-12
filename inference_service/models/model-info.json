@@ -1,9 +1,10 @@
 {
     "name": "PPE YOLO11s New Dataset v1",
-    "source_archive": "ppe_yolo11s_newdataset_v1-20261011T060814Z-1-001.zip",
+    "source_archive": "ppe_yolo11s_newdataset_v1-20261012T005142Z-1-001.zip",
     "checkpoint": "best.pt",
-    "sha256": "2760488a6a1549818c4ab1460572d1f8ef02959030668d8bd9876cf6a80e878c",
+    "sha256": "eaa51d55d386b42f1cd948549ff2c5ea2df7cb90cf23125b0696c6b7d8003553",
     "ultralytics_version": "8.4.175",
+    "trained_at": "2026-10-12T00:24:56+07:00",
     "source_classes": ["Helmet", "Mask", "Person"],
     "application_classes": ["helm", "masker", "people"],
     "class_mapping": {
@@ -21,9 +22,9 @@
         "best_epoch": 60
     },
     "metrics": {
-        "precision": 0.93930,
-        "recall": 0.90805,
-        "map50": 0.95095,
-        "map50_95": 0.67852
+        "precision": 0.93318,
+        "recall": 0.89616,
+        "map50": 0.93655,
+        "map50_95": 0.66467
     }
 }

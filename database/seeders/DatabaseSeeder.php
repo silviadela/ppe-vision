@@ -27,14 +27,14 @@ class DatabaseSeeder extends Seeder
             'device' => 'Google Colab GPU',
             'finished_at' => '2026-10-11 12:26:55',
             'metrics' => [
-                'precision' => .93930,
-                'recall' => .90805,
-                'map50' => .95095,
-                'map50_95' => .67852,
-                'val_box_loss' => 1.00014,
-                'val_cls_loss' => .49519,
-                'val_dfl_loss' => 1.05783,
-                'fitness' => .70576,
+                'precision' => .93318,
+                'recall' => .89616,
+                'map50' => .93655,
+                'map50_95' => .66467,
+                'val_box_loss' => 1.00712,
+                'val_cls_loss' => .53276,
+                'val_dfl_loss' => 1.07003,
+                'fitness' => .66467,
                 'best_epoch' => 60,
             ],
             'per_class_metrics' => [
@@ -48,7 +48,7 @@ class DatabaseSeeder extends Seeder
             'confusion_matrix_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix.png',
             'confusion_matrix_normalized_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix_normalized.png',
             'pr_curve_path' => 'training/ppe-yolo11s-newdataset-v1/BoxPR_curve.png',
-            'notes' => 'Hasil training Google Colab menggunakan dataset baru. Kelas model Helmet, Mask, Person dinormalisasi menjadi Helm, Masker, People. Metrics per kelas tidak tersedia di artefak training.',
+            'notes' => 'Hasil training terbaru Google Colab selesai 12 Oktober 2026 menggunakan dataset baru. Kelas model Helmet, Mask, Person dinormalisasi menjadi Helm, Masker, People. Metrics per kelas tidak tersedia di artefak training.',
         ]);
         $run->save();
     }
