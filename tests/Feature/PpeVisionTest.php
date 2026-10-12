@@ -51,7 +51,7 @@ class PpeVisionTest extends TestCase
 
         $run->refresh();
         $this->assertNotNull($run->ai_summary);
-        $this->assertSame('Analisis lokal berbasis aturan', $run->summary_generated_by);
+        $this->assertSame('Analisis lokal berbasis aturan (bukan LLM)', $run->summary_generated_by);
         $this->assertStringContainsString('masker', $run->ai_summary);
     }
 

@@ -22,8 +22,10 @@
 <text class="chart-label" x="35" y="212">Epoch awal</text><text class="chart-label" x="630" y="212">Epoch {{ $latestRun->epochs }}</text></svg>
 <div class="legend"><span><i style="background:#1f6b4f"></i>mAP50-95</span><span><i style="background:#e9a23b"></i>Precision</span><span><i style="background:#7294a6"></i>Recall</span></div>
 @else<div class="empty">Training history belum diimpor.</div>@endif</section>
-<section class="card"><div class="card-title"><div><h2>Performa per kelas</h2><p>mAP50-95 untuk tiap kategori</p></div></div><div class="classes">
-@forelse($latestRun->per_class_metrics ?? [] as $class=>$metric)<div class="class-row"><strong>{{ $class }}</strong><div class="bar"><span style="width:{{ ($metric['map50_95'] ?? 0)*100 }}%"></span></div><span>{{ isset($metric['map50_95']) ? number_format($metric['map50_95']*100,1).'%' : '—' }}</span></div>@empty<div class="empty">Metrics per kelas belum ada.</div>@endforelse
+<section class="card"><div class="card-title"><div><h2>Performa per kelas</h2><p>mAP50 untuk tiap kategori dari Precision–Recall Curve</p></div></div><div class="classes">
+@forelse($latestRun->per_class_metrics ?? [] as $class=>$metric)
+@php($classMap = $metric['map50'] ?? $metric['map50_95'] ?? null)
+<div class="class-row"><strong>{{ $class }}</strong><div class="bar"><span style="width:{{ ($classMap ?? 0)*100 }}%"></span></div><span>{{ $classMap !== null ? number_format($classMap*100,1).'%' : '—' }}</span></div>@empty<div class="empty">Metrics per kelas belum ada.</div>@endforelse
 </div><a href="{{ route('summary.show', $latestRun) }}" class="btn btn-secondary" style="width:100%;margin-top:25px">Lihat analisis AI</a></section></div>
 @else<section class="card empty"><h2>Belum ada eksperimen</h2><p>Tambahkan konfigurasi training pertama untuk memulai.</p><a class="btn btn-primary" href="{{ route('experiments.create') }}">Buat eksperimen</a></section>@endif
 <section class="card" style="margin-top:18px"><div class="card-title"><div><h2>Eksperimen terbaru</h2><p>Riwayat konfigurasi dan hasil training</p></div><a href="{{ route('experiments.index') }}" class="btn btn-secondary btn-sm">Lihat semua</a></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Model</th><th>Epoch</th><th>Batch</th><th>mAP50-95</th><th>Status</th></tr></thead><tbody>

@@ -215,14 +215,19 @@ def draw_result(frame: np.ndarray, result) -> np.ndarray:
 
 
 def render_summary(rows: list[dict], title: str = "Ringkasan kelas") -> None:
-    if not rows:
-        st.warning("Tidak ada objek yang melewati confidence threshold.")
-        return
-
     counts = Counter(row["Kelas"] for row in rows)
     st.markdown(f"**{title}**")
-    for label, count in sorted(counts.items()):
-        st.write(f"{label}: **{count}**")
+    columns = st.columns(3)
+    for column, label in zip(columns, ("Helm", "Masker", "People")):
+        column.metric(label, counts.get(label, 0))
+
+    if not rows:
+        st.warning("Tidak ada objek yang melewati confidence threshold.")
+    elif any(counts.get(label, 0) == 0 for label in ("Helm", "Masker", "People")):
+        st.caption(
+            "Nilai 0 berarti kelas tersebut tidak terdeteksi pada input ini, "
+            "bukan berarti kelasnya tidak tersedia pada model."
+        )
 
 
 def dataframe_for_display(rows: list[dict]) -> pd.DataFrame:

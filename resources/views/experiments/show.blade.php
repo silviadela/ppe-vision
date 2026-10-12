@@ -12,7 +12,7 @@
 </div>@if($run->notes)<p style="margin-top:18px;color:var(--muted)">{{ $run->notes }}</p>@endif</section>
 <section class="card"><div class="card-title"><div><h2>Kelas objek</h2><p>Pemetaan kelas model ke istilah assessment</p></div></div><div class="classes">
 @forelse($run->per_class_metrics??[] as $class=>$metric)
-<div class="setting"><strong style="text-transform:capitalize">{{ $class }}</strong><span>Kelas model: {{ $metric['source_class'] ?? $class }} @if(isset($metric['map50_95'])) · mAP {{ number_format($metric['map50_95']*100,1) }}% @else · metric per kelas tidak tersedia @endif</span></div>
+<div class="setting"><strong style="text-transform:capitalize">{{ $class }}</strong><span>Kelas model: {{ $metric['source_class'] ?? $class }} @if(isset($metric['map50'])) · mAP50 {{ number_format($metric['map50']*100,1) }}% @elseif(isset($metric['map50_95'])) · mAP50-95 {{ number_format($metric['map50_95']*100,1) }}% @else · metric per kelas tidak tersedia @endif</span></div>
 @empty
 <div class="empty">Hasil belum diimpor.</div>
 @endforelse
@@ -26,6 +26,11 @@
     'Confusion Matrix' => $run->confusion_matrix_path,
     'Normalized Confusion Matrix' => $run->confusion_matrix_normalized_path,
     'Precision–Recall Curve' => $run->pr_curve_path,
+    'F1–Confidence Curve' => $run->metrics['artifacts']['f1_curve'] ?? null,
+    'Precision–Confidence Curve' => $run->metrics['artifacts']['precision_curve'] ?? null,
+    'Recall–Confidence Curve' => $run->metrics['artifacts']['recall_curve'] ?? null,
+    'Distribusi Label Dataset' => $run->metrics['artifacts']['label_distribution'] ?? null,
+    'Contoh Prediksi Validasi' => $run->metrics['artifacts']['validation_prediction'] ?? null,
 ] as $label => $path)
 @if($path)<figure class="artifact"><a href="{{ asset($path) }}" target="_blank" rel="noopener"><img src="{{ asset($path) }}" alt="{{ $label }}"></a><figcaption>{{ $label }}</figcaption></figure>@endif
 @endforeach

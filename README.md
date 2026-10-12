@@ -40,7 +40,7 @@ Buka `http://127.0.0.1:8000`. Database lokal memakai SQLite.
 
 Project menggunakan checkpoint **PPE YOLO11s New Dataset v1** dengan kelas sumber `Helmet`, `Mask`, dan `Person`. API menormalkannya menjadi `helm`, `masker`, dan `people`. Konfigurasi dan checksum model tercatat di `inference_service/models/model-info.json`.
 
-Metric checkpoint terbaik (epoch 60): precision 0.93930, recall 0.90805, mAP50 0.95095, dan mAP50-95 0.67852. Grafik asli tersedia di halaman detail eksperimen.
+Metric checkpoint terbaik (epoch 60): precision 0.93318, recall 0.89616, mAP50 0.93655, dan mAP50-95 0.66467. mAP50 per kelas adalah Helmet 0.975, Mask 0.922, dan Person 0.913. Grafik asli tersedia di halaman detail eksperimen.
 
 File model berada di `inference_service/models/best.pt` dan sudah diizinkan oleh `.gitignore` untuk ikut repository. Jika project dipindahkan tanpa file model, lakukan langkah berikut.
 
@@ -96,6 +96,7 @@ Seluruh isi paket diunggah ke `htdocs`. `.htaccess` root mengarahkan request ke 
 1. Buka Streamlit Community Cloud dan pilih repository yang sama.
 2. Gunakan entrypoint `streamlit_app/app.py`.
 3. Checkpoint `inference_service/models/best.pt` berukuran sekitar 19 MB dan disiapkan agar dapat ikut repository. Gunakan repository private jika checkpoint tidak boleh dibagikan. Sebagai alternatif, hapus pengecualian model dari `.gitignore`, host model secara privat, lalu isi `YOLO_MODEL_URL` dan `YOLO_MODEL_SHA256` pada Streamlit Secrets.
+4. Pada **App settings > Sharing**, pilih **This app is public and searchable**. Aplikasi private tidak dapat ditampilkan melalui iframe Laravel kepada penguji.
 
 Setelah layanan inferensi aktif, simpan URL `https://...streamlit.app` pada `STREAMLIT_DEMO_URL` di `.env` InfinityFree. Dashboard otomatis menambahkan mode embed dan menampilkannya di menu **Demo Deteksi**. Link yang dibagikan kepada penguji cukup URL Laravel dari InfinityFree.
 

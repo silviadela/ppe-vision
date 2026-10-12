@@ -26,7 +26,7 @@ class MetricSummaryService
             }
         }
 
-        return ['text' => $this->localSummary($run), 'engine' => 'Analisis lokal berbasis aturan'];
+        return ['text' => $this->localSummary($run), 'engine' => 'Analisis lokal berbasis aturan (bukan LLM)'];
     }
 
     private function prompt(TrainingRun $run): string

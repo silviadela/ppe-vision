@@ -36,19 +36,33 @@ class DatabaseSeeder extends Seeder
                 'val_dfl_loss' => 1.07003,
                 'fitness' => .66467,
                 'best_epoch' => 60,
+                'class_distribution' => [
+                    'helm' => 6427,
+                    'masker' => 11231,
+                    'people' => 6143,
+                ],
+                'artifacts' => [
+                    'f1_curve' => 'training/ppe-yolo11s-newdataset-v1/BoxF1_curve.png',
+                    'precision_curve' => 'training/ppe-yolo11s-newdataset-v1/BoxP_curve.png',
+                    'recall_curve' => 'training/ppe-yolo11s-newdataset-v1/BoxR_curve.png',
+                    'label_distribution' => 'training/ppe-yolo11s-newdataset-v1/labels.jpg',
+                    'validation_prediction' => 'training/ppe-yolo11s-newdataset-v1/val_batch0_pred.jpg',
+                ],
             ],
             'per_class_metrics' => [
-                'helm' => ['source_class' => 'Helmet'],
-                'masker' => ['source_class' => 'Mask'],
-                'people' => ['source_class' => 'Person'],
+                'helm' => ['source_class' => 'Helmet', 'map50' => .975],
+                'masker' => ['source_class' => 'Mask', 'map50' => .922],
+                'people' => ['source_class' => 'Person', 'map50' => .913],
             ],
             'training_history' => $this->readTrainingHistory(),
+            'ai_summary' => 'Model YOLO11s menunjukkan performa validasi yang kuat pada IoU 0,50 dengan precision 93,3%, recall 89,6%, dan mAP50 93,7%. Namun, mAP50-95 sebesar 66,5% menunjukkan ketepatan lokasi bounding box masih menurun pada ambang IoU yang lebih ketat. Berdasarkan mAP50 per kelas, Helmet merupakan kelas terkuat (97,5%), diikuti Mask (92,2%) dan Person (91,3%). Pengujian lapangan sebaiknya memprioritaskan objek kecil, wajah tertutup, pencahayaan rendah, dan sudut kamera yang berbeda dari data training. Gunakan confidence awal 0,20 lalu evaluasi false positive dan false negative pada gambar yang benar-benar berasal dari kamera demo.',
+            'summary_generated_by' => 'OpenAI Codex (AI-assisted baseline)',
             'model_artifact_path' => 'inference_service/models/best.pt',
             'results_plot_path' => 'training/ppe-yolo11s-newdataset-v1/results.png',
             'confusion_matrix_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix.png',
             'confusion_matrix_normalized_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix_normalized.png',
             'pr_curve_path' => 'training/ppe-yolo11s-newdataset-v1/BoxPR_curve.png',
-            'notes' => 'Hasil training terbaru Google Colab selesai 12 Oktober 2026 menggunakan dataset baru. Kelas model Helmet, Mask, Person dinormalisasi menjadi Helm, Masker, People. Metrics per kelas tidak tersedia di artefak training.',
+            'notes' => 'Hasil training terbaru Google Colab selesai 12 Oktober 2026 menggunakan dataset baru. Kelas model Helmet, Mask, Person dinormalisasi menjadi Helm, Masker, People. Nilai per kelas adalah mAP50 yang dibaca dari Precision-Recall Curve Ultralytics.',
         ]);
         $run->save();
     }

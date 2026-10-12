@@ -25,6 +25,16 @@
         "precision": 0.93318,
         "recall": 0.89616,
         "map50": 0.93655,
-        "map50_95": 0.66467
+        "map50_95": 0.66467,
+        "per_class_map50": {
+            "Helmet": 0.975,
+            "Mask": 0.922,
+            "Person": 0.913
+        }
+    },
+    "class_distribution": {
+        "Helmet": 6427,
+        "Mask": 11231,
+        "Person": 6143
     }
 }
