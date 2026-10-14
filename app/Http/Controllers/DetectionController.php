@@ -30,6 +30,8 @@ class DetectionController extends Controller
 
     public function store(Request $request, YoloInferenceService $service)
     {
+        abort_unless($service->isReady(), 503, 'Layanan inferensi Python tidak tersedia.');
+
         $data = $request->validate([
             'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'training_run_id' => ['nullable', 'exists:training_runs,id'],

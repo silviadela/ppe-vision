@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 import subprocess
@@ -23,6 +24,7 @@ from ultralytics import YOLO
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
 DEFAULT_MODEL_PATH = PROJECT_ROOT / "inference_service" / "models" / "best.pt"
+MODEL_INFO_PATH = PROJECT_ROOT / "inference_service" / "models" / "model-info.json"
 CLASS_ALIASES = {
     "hardhat": "helm",
     "helmet": "helm",
@@ -46,6 +48,14 @@ def setting(name: str, default: str = "") -> str:
         return str(st.secrets.get(name, default))
     except Exception:
         return default
+
+
+def bundled_model_checksum() -> str:
+    try:
+        model_info = json.loads(MODEL_INFO_PATH.read_text(encoding="utf-8"))
+        return str(model_info.get("sha256", ""))
+    except (OSError, ValueError, TypeError):
+        return ""
 
 
 def verify_checksum(path: Path, expected: str) -> None:
@@ -406,7 +416,7 @@ if is_embedded:
 
 model_path_setting = setting("YOLO_MODEL_PATH", str(DEFAULT_MODEL_PATH))
 model_url = setting("YOLO_MODEL_URL")
-model_checksum = setting("YOLO_MODEL_SHA256")
+model_checksum = setting("YOLO_MODEL_SHA256", bundled_model_checksum())
 
 st.markdown('<div class="demo-kicker">Pengujian model</div>', unsafe_allow_html=True)
 st.markdown('<h1 class="demo-title">Deteksi PPE dengan YOLO</h1>', unsafe_allow_html=True)

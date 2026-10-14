@@ -13,63 +13,70 @@ class DatabaseSeeder extends Seeder
             ->first() ?? TrainingRun::whereIn('name', [
                 'PPE YOLO11s Best Config',
                 'PPE YOLO11s New Dataset v1',
+                'PPE YOLO11s New Dataset v1 (Model 2)',
+                'PPE YOLO26s Dataset 4 Final',
             ])->first() ?? new TrainingRun;
 
         $run->fill([
-            'name' => 'PPE YOLO11s New Dataset v1',
-            'model_version' => 'YOLO11s',
+            'name' => 'PPE YOLO26s Dataset 4 Final',
+            'model_version' => 'YOLO26s',
             'status' => 'completed',
-            'dataset_name' => 'Person Mask Helmet v2 (resplit)',
+            'dataset_name' => 'PPE Detection and Compliance v5',
             'epochs' => 60,
-            'batch_size' => 32,
+            'batch_size' => 16,
             'image_size' => 640,
             'optimizer' => 'AdamW',
             'device' => 'Google Colab GPU',
-            'finished_at' => '2026-10-11 12:26:55',
+            'finished_at' => '2026-10-13 22:11:17',
             'metrics' => [
-                'precision' => .93318,
-                'recall' => .89616,
-                'map50' => .93655,
-                'map50_95' => .66467,
-                'val_box_loss' => 1.00712,
-                'val_cls_loss' => .53276,
-                'val_dfl_loss' => 1.07003,
-                'fitness' => .66467,
-                'best_epoch' => 60,
-                'class_distribution' => [
-                    'helm' => 6427,
-                    'masker' => 11231,
-                    'people' => 6143,
+                'evaluation_split' => 'test',
+                'precision' => .9548221930,
+                'recall' => .9070161537,
+                'f1' => .9303054199,
+                'map50' => .9570234938,
+                'map50_95' => .6929913951,
+                'validation' => [
+                    'precision' => .9301602307,
+                    'recall' => .9203828735,
+                    'f1' => .9252457222,
+                    'map50' => .9480501096,
+                    'map50_95' => .6637943567,
+                ],
+                'best_epoch' => 58,
+                'dataset_split_images' => [
+                    'train' => 3025,
+                    'validation' => 603,
+                    'test' => 212,
                 ],
                 'artifacts' => [
-                    'f1_curve' => 'training/ppe-yolo11s-newdataset-v1/BoxF1_curve.png',
-                    'precision_curve' => 'training/ppe-yolo11s-newdataset-v1/BoxP_curve.png',
-                    'recall_curve' => 'training/ppe-yolo11s-newdataset-v1/BoxR_curve.png',
-                    'label_distribution' => 'training/ppe-yolo11s-newdataset-v1/labels.jpg',
-                    'validation_prediction' => 'training/ppe-yolo11s-newdataset-v1/val_batch0_pred.jpg',
+                    'f1_curve' => 'training/ppe-yolo26s-dataset4-final/BoxF1_curve.png',
+                    'precision_curve' => 'training/ppe-yolo26s-dataset4-final/BoxP_curve.png',
+                    'recall_curve' => 'training/ppe-yolo26s-dataset4-final/BoxR_curve.png',
+                    'label_distribution' => 'training/ppe-yolo26s-dataset4-final/labels.jpg',
+                    'validation_prediction' => 'training/ppe-yolo26s-dataset4-final/val_batch0_pred.jpg',
                 ],
             ],
             'per_class_metrics' => [
-                'helm' => ['source_class' => 'Helmet', 'map50' => .975],
-                'masker' => ['source_class' => 'Mask', 'map50' => .922],
-                'people' => ['source_class' => 'Person', 'map50' => .913],
+                'helm' => ['source_class' => 'Helmet', 'precision' => .9632154123, 'recall' => .8952287890, 'f1' => .9279785382, 'map50' => .9624886079, 'map50_95' => .6905393419],
+                'masker' => ['source_class' => 'Mask', 'precision' => .9287713636, 'recall' => .875, 'f1' => .9010842051, 'map50' => .9313001169, 'map50_95' => .6339617180],
+                'people' => ['source_class' => 'Person', 'precision' => .9724798032, 'recall' => .9508196721, 'f1' => .9615277694, 'map50' => .9772817565, 'map50_95' => .7544731253],
             ],
             'training_history' => $this->readTrainingHistory(),
-            'ai_summary' => 'Model YOLO11s menunjukkan performa validasi yang kuat pada IoU 0,50 dengan precision 93,3%, recall 89,6%, dan mAP50 93,7%. Namun, mAP50-95 sebesar 66,5% menunjukkan ketepatan lokasi bounding box masih menurun pada ambang IoU yang lebih ketat. Berdasarkan mAP50 per kelas, Helmet merupakan kelas terkuat (97,5%), diikuti Mask (92,2%) dan Person (91,3%). Pengujian lapangan sebaiknya memprioritaskan objek kecil, wajah tertutup, pencahayaan rendah, dan sudut kamera yang berbeda dari data training. Gunakan confidence awal 0,20 lalu evaluasi false positive dan false negative pada gambar yang benar-benar berasal dari kamera demo.',
+            'ai_summary' => 'Model final YOLO26s mencapai precision 95,5%, recall 90,7%, F1 93,0%, mAP50 95,7%, dan mAP50-95 69,3% pada 212 gambar test independen. Person menjadi kelas terkuat dengan mAP50-95 75,4%, diikuti Helmet 69,1%; Mask merupakan kelas terlemah dengan mAP50-95 63,4% dan recall 87,5%. Model layak untuk demo, tetapi evaluasi lapangan harus memberi perhatian khusus pada masker kecil, wajah tertutup sebagian, cahaya rendah, dan sudut kamera yang berbeda. Mulai confidence pada 0,20 lalu sesuaikan berdasarkan false positive dan false negative video nyata.',
             'summary_generated_by' => 'OpenAI Codex (AI-assisted baseline)',
             'model_artifact_path' => 'inference_service/models/best.pt',
-            'results_plot_path' => 'training/ppe-yolo11s-newdataset-v1/results.png',
-            'confusion_matrix_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix.png',
-            'confusion_matrix_normalized_path' => 'training/ppe-yolo11s-newdataset-v1/confusion_matrix_normalized.png',
-            'pr_curve_path' => 'training/ppe-yolo11s-newdataset-v1/BoxPR_curve.png',
-            'notes' => 'Hasil training terbaru Google Colab selesai 12 Oktober 2026 menggunakan dataset baru. Kelas model Helmet, Mask, Person dinormalisasi menjadi Helm, Masker, People. Nilai per kelas adalah mAP50 yang dibaca dari Precision-Recall Curve Ultralytics.',
+            'results_plot_path' => 'training/ppe-yolo26s-dataset4-final/results.png',
+            'confusion_matrix_path' => 'training/ppe-yolo26s-dataset4-final/confusion_matrix.png',
+            'confusion_matrix_normalized_path' => 'training/ppe-yolo26s-dataset4-final/confusion_matrix_normalized.png',
+            'pr_curve_path' => 'training/ppe-yolo26s-dataset4-final/BoxPR_curve.png',
+            'notes' => 'Lima trial random search dijalankan selama 20 epoch pada 60% data. Trial 4 menghasilkan skor gabungan terbaik dan hyperparameter-nya dipakai untuk final training 60 epoch pada seluruh data train. Metrics utama dan metrics per kelas berasal dari split test independen; training curve berasal dari split validation.',
         ]);
         $run->save();
     }
 
     private function readTrainingHistory(): array
     {
-        $handle = fopen(database_path('data/ppe_yolo11s_newdataset_v1_results.csv'), 'r');
+        $handle = fopen(database_path('data/ppe_yolo26s_dataset4_final_results.csv'), 'r');
         if ($handle === false) {
             return [];
         }

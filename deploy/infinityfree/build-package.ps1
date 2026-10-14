@@ -6,6 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $OutputRoot = Join-Path $PSScriptRoot 'package'
 $HtdocsRoot = Join-Path $OutputRoot 'htdocs'
+$UpdateRoot = Join-Path $PSScriptRoot 'update-safe'
+$UpdateHtdocsRoot = Join-Path $UpdateRoot 'htdocs'
 $ZipPath = Join-Path $PSScriptRoot 'ppe-vision-infinityfree.zip'
 
 foreach ($command in @('php', 'composer', 'npm')) {
@@ -15,7 +17,8 @@ foreach ($command in @('php', 'composer', 'npm')) {
 }
 
 $resolvedDeployRoot = (Resolve-Path $PSScriptRoot).Path
-if (-not $OutputRoot.StartsWith($resolvedDeployRoot, [StringComparison]::OrdinalIgnoreCase)) {
+if (-not $OutputRoot.StartsWith($resolvedDeployRoot, [StringComparison]::OrdinalIgnoreCase) -or
+    -not $UpdateRoot.StartsWith($resolvedDeployRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw 'Lokasi output berada di luar folder deploy/infinityfree.'
 }
 
@@ -24,6 +27,9 @@ if (Test-Path -LiteralPath $OutputRoot) {
 }
 if (Test-Path -LiteralPath $ZipPath) {
     Remove-Item -LiteralPath $ZipPath -Force
+}
+if (Test-Path -LiteralPath $UpdateRoot) {
+    Remove-Item -LiteralPath $UpdateRoot -Recurse -Force
 }
 New-Item -ItemType Directory -Path $HtdocsRoot -Force | Out-Null
 
@@ -44,6 +50,11 @@ Get-ChildItem -LiteralPath (Join-Path $ProjectRoot 'public') -Force |
 New-Item -ItemType Directory -Path (Join-Path $publicTarget 'storage') -Force | Out-Null
 
 Remove-Item -LiteralPath (Join-Path $HtdocsRoot 'database\database.sqlite') -Force -ErrorAction SilentlyContinue
+# Model berjalan di Streamlit, sehingga backup checkpoint dan data runtime lokal
+# tidak boleh ikut ke paket PHP InfinityFree.
+Remove-Item -LiteralPath (Join-Path $HtdocsRoot 'storage\app\private\model-backups') -Recurse -Force -ErrorAction SilentlyContinue
+Get-ChildItem -LiteralPath (Join-Path $HtdocsRoot 'storage\logs') -Force -ErrorAction SilentlyContinue |
+    Remove-Item -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $ProjectRoot '.env.infinityfree.example') -Destination (Join-Path $HtdocsRoot '.env') -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'htdocs.htaccess') -Destination (Join-Path $HtdocsRoot '.htaccess') -Force
 
@@ -97,8 +108,15 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
     $false
 )
 
+# Versi ini aman untuk pembaruan FileZilla karena tidak mengandung .env.
+New-Item -ItemType Directory -Path $UpdateRoot -Force | Out-Null
+Copy-Item -LiteralPath $HtdocsRoot -Destination $UpdateRoot -Recurse -Force
+Remove-Item -LiteralPath (Join-Path $UpdateHtdocsRoot '.env') -Force
+
 Write-Host ''
 Write-Host 'Paket selesai:'
 Write-Host "Folder : $HtdocsRoot"
+Write-Host "Update : $UpdateHtdocsRoot"
 Write-Host "ZIP    : $ZipPath"
-Write-Host 'Edit htdocs/.env, lalu unggah seluruh isi folder htdocs ke htdocs InfinityFree.'
+Write-Host 'Instalasi baru: edit package/htdocs/.env lalu unggah seluruh isinya.'
+Write-Host 'Pembaruan: unggah seluruh isi update-safe/htdocs; .env server tidak akan tertimpa.'

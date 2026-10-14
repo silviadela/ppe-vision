@@ -14,6 +14,7 @@ class SummaryController extends Controller
 
     public function generate(TrainingRun $trainingRun, MetricSummaryService $service)
     {
+        abort_unless(config('deployment.allow_admin_writes'), 404);
         abort_if(empty($trainingRun->metrics), 422, 'Metrics belum tersedia.');
         $summary = $service->generate($trainingRun);
         $trainingRun->update([

@@ -14,11 +14,15 @@ class TrainingRunController extends Controller
 
     public function create()
     {
+        $this->ensureAdminWritesEnabled();
+
         return view('experiments.create');
     }
 
     public function store(Request $request)
     {
+        $this->ensureAdminWritesEnabled();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'model_version' => ['required', 'string', 'max:50'],
@@ -44,6 +48,8 @@ class TrainingRunController extends Controller
 
     public function importMetrics(Request $request, TrainingRun $trainingRun)
     {
+        $this->ensureAdminWritesEnabled();
+
         $data = $request->validate([
             'results_csv' => ['nullable', 'file', 'mimes:csv,txt', 'max:5120'],
             'precision' => ['required', 'numeric', 'between:0,1'],
@@ -90,7 +96,7 @@ class TrainingRunController extends Controller
             }
             $row = array_combine($headers, $values);
             $rows[] = [
-                'epoch' => ((int) ($row['epoch'] ?? count($rows))) + 1,
+                'epoch' => (int) ($row['epoch'] ?? count($rows) + 1),
                 'precision' => (float) ($row['metrics/precision(B)'] ?? 0),
                 'recall' => (float) ($row['metrics/recall(B)'] ?? 0),
                 'map50_95' => (float) ($row['metrics/mAP50-95(B)'] ?? 0),
@@ -99,5 +105,10 @@ class TrainingRunController extends Controller
         fclose($handle);
 
         return $rows;
+    }
+
+    private function ensureAdminWritesEnabled(): void
+    {
+        abort_unless(config('deployment.allow_admin_writes'), 404);
     }
 }

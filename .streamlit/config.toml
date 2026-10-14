@@ -13,6 +13,7 @@ xsrfCookieSameSite = "none"
 corsAllowedOrigins = [
     "http://127.0.0.1:8000",
     "http://localhost:8000",
+    "https://ppe-vision.infinityfreeapp.com",
     "https://imagination-remarkable-truth-mothers.trycloudflare.com",
     "https://ppe-vision-dashboard.onrender.com",
 ]

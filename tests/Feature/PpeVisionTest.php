@@ -55,6 +55,25 @@ class PpeVisionTest extends TestCase
         $this->assertStringContainsString('masker', $run->ai_summary);
     }
 
+    public function test_summary_reads_map50_per_class_from_latest_checkpoint(): void
+    {
+        config(['services.ollama.enabled' => false]);
+        $run = $this->completedRun();
+        $run->update([
+            'per_class_metrics' => [
+                'helm' => ['map50' => .975],
+                'masker' => ['map50' => .922],
+                'people' => ['map50' => .913],
+            ],
+        ]);
+
+        $this->post(route('summary.generate', $run))->assertRedirect();
+
+        $run->refresh();
+        $this->assertStringContainsString('people', $run->ai_summary);
+        $this->assertStringContainsString('mAP50 91.3%', $run->ai_summary);
+    }
+
     public function test_training_metrics_can_be_imported_manually(): void
     {
         $run = TrainingRun::create([
@@ -120,6 +139,7 @@ class PpeVisionTest extends TestCase
         Storage::fake('public');
         config(['services.yolo.url' => 'http://yolo.test']);
         Http::fake([
+            'http://yolo.test/health' => Http::response(['status' => 'ready']),
             'http://yolo.test/predict' => Http::response([
                 'detections' => [[
                     'class' => 'helm',
@@ -153,6 +173,25 @@ class PpeVisionTest extends TestCase
         $this->get('/install')->assertNotFound();
     }
 
+    public function test_production_mode_hides_admin_writes(): void
+    {
+        config(['deployment.allow_admin_writes' => false]);
+        $run = $this->completedRun();
+        $run->update([
+            'results_plot_path' => 'training/run/results.png',
+            'confusion_matrix_path' => 'training/run/confusion_matrix.png',
+        ]);
+
+        $this->get(route('experiments.create'))->assertNotFound();
+        $this->post(route('experiments.metrics', $run), [])->assertNotFound();
+        $this->post(route('summary.generate', $run))->assertNotFound();
+        $this->get('/')->assertOk()->assertDontSee('+ Eksperimen baru');
+        $this->get(route('experiments.show', $run))
+            ->assertOk()
+            ->assertSee('Artefak evaluasi')
+            ->assertDontSee('Impor hasil dari Colab');
+    }
+
     public function test_web_installer_runs_migrations_and_seeder_with_the_correct_token(): void
     {
         config(['deployment.infinityfree_install_token' => 'test-install-token']);
@@ -166,7 +205,7 @@ class PpeVisionTest extends TestCase
             ->assertSee('Instalasi berhasil');
 
         $this->assertDatabaseHas('training_runs', [
-            'name' => 'PPE YOLO11s New Dataset v1',
+            'name' => 'PPE YOLO26s Dataset 4 Final',
         ]);
     }
 

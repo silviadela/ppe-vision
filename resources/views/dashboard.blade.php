@@ -1,11 +1,11 @@
 @extends('layouts.app')
 @section('title', 'Dashboard')
 @section('content')
-<div class="page-head"><div><p class="eyebrow">Overview</p><h1>Model performance</h1><p>Pantau eksperimen PPE detection dan kesiapan model dalam satu tempat.</p></div><a class="btn btn-primary" href="{{ route('experiments.create') }}">+ Eksperimen baru</a></div>
+<div class="page-head"><div><p class="eyebrow">Overview</p><h1>Model performance</h1><p>Pantau eksperimen PPE detection dan kesiapan model dalam satu tempat.@if(($latestRun?->metrics['evaluation_split'] ?? null) === 'test') Metrics utama berasal dari test independen.@endif</p></div>@if(config('deployment.allow_admin_writes'))<a class="btn btn-primary" href="{{ route('experiments.create') }}">+ Eksperimen baru</a>@endif</div>
 @if($latestRun)
 @php($m = $latestRun->metrics ?? [])
 <div class="grid stats">
-@foreach([['mAP50-95', $m['map50_95'] ?? 0], ['Precision', $m['precision'] ?? 0], ['Recall', $m['recall'] ?? 0], ['mAP50', $m['map50'] ?? 0]] as [$label,$value])
+@foreach([['mAP50-95', $m['map50_95'] ?? 0], ['Precision', $m['precision'] ?? 0], ['Recall', $m['recall'] ?? 0], ['F1', $m['f1'] ?? 0], ['mAP50', $m['map50'] ?? 0]] as [$label,$value])
 <div class="stat"><div class="stat-top"><span>{{ $label }}</span><span class="delta">●</span></div><div class="stat-value">{{ number_format($value * 100, 1) }}%</div><div class="stat-note">{{ $latestRun->name }}</div></div>
 @endforeach
 </div>
@@ -27,7 +27,7 @@
 @php($classMap = $metric['map50'] ?? $metric['map50_95'] ?? null)
 <div class="class-row"><strong>{{ $class }}</strong><div class="bar"><span style="width:{{ ($classMap ?? 0)*100 }}%"></span></div><span>{{ $classMap !== null ? number_format($classMap*100,1).'%' : '—' }}</span></div>@empty<div class="empty">Metrics per kelas belum ada.</div>@endforelse
 </div><a href="{{ route('summary.show', $latestRun) }}" class="btn btn-secondary" style="width:100%;margin-top:25px">Lihat analisis AI</a></section></div>
-@else<section class="card empty"><h2>Belum ada eksperimen</h2><p>Tambahkan konfigurasi training pertama untuk memulai.</p><a class="btn btn-primary" href="{{ route('experiments.create') }}">Buat eksperimen</a></section>@endif
+@else<section class="card empty"><h2>Belum ada eksperimen</h2><p>Data eksperimen belum tersedia.</p>@if(config('deployment.allow_admin_writes'))<a class="btn btn-primary" href="{{ route('experiments.create') }}">Buat eksperimen</a>@endif</section>@endif
 <section class="card" style="margin-top:18px"><div class="card-title"><div><h2>Eksperimen terbaru</h2><p>Riwayat konfigurasi dan hasil training</p></div><a href="{{ route('experiments.index') }}" class="btn btn-secondary btn-sm">Lihat semua</a></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Model</th><th>Epoch</th><th>Batch</th><th>mAP50-95</th><th>Status</th></tr></thead><tbody>
 @forelse($runs as $run)<tr><td><a href="{{ route('experiments.show',$run) }}"><strong>{{ $run->name }}</strong></a></td><td>{{ $run->model_version }}</td><td>{{ $run->epochs }}</td><td>{{ $run->batch_size }}</td><td>{{ isset($run->metrics['map50_95']) ? number_format($run->metrics['map50_95']*100,1).'%' : '—' }}</td><td><span class="pill {{ $run->status==='completed'?'pill-success':'pill-draft' }}">{{ $run->status }}</span></td></tr>@empty<tr><td colspan="6" class="empty">Belum ada data.</td></tr>@endforelse
 </tbody></table></div></section>

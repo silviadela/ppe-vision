@@ -38,9 +38,9 @@ Buka `http://127.0.0.1:8000`. Database lokal memakai SQLite.
 
 ## Model Colab yang terintegrasi
 
-Project menggunakan checkpoint **PPE YOLO11s New Dataset v1** dengan kelas sumber `Helmet`, `Mask`, dan `Person`. API menormalkannya menjadi `helm`, `masker`, dan `people`. Konfigurasi dan checksum model tercatat di `inference_service/models/model-info.json`.
+Project menggunakan checkpoint **PPE YOLO26s Dataset 4 Final** dengan kelas sumber `Helmet`, `Mask`, dan `Person`. API menormalkannya menjadi `helm`, `masker`, dan `people`. Konfigurasi, checksum, hasil random search, dan rincian evaluasi model tercatat di `inference_service/models/model-info.json` serta `database/data`.
 
-Metric checkpoint terbaik (epoch 60): precision 0.93318, recall 0.89616, mAP50 0.93655, dan mAP50-95 0.66467. mAP50 per kelas adalah Helmet 0.975, Mask 0.922, dan Person 0.913. Grafik asli tersedia di halaman detail eksperimen.
+Setelah lima trial random search, konfigurasi trial 4 dilatih ulang selama 60 epoch. Evaluasi pada **212 gambar test independen** menghasilkan precision 0.95482, recall 0.90702, F1 0.93031, mAP50 0.95702, dan mAP50-95 0.69299. mAP50-95 per kelas adalah Helmet 0.69054, Mask 0.63396, dan Person 0.75447. Grafik training dan evaluasi test tersedia di halaman detail eksperimen.
 
 File model berada di `inference_service/models/best.pt` dan sudah diizinkan oleh `.gitignore` untuk ikut repository. Jika project dipindahkan tanpa file model, lakukan langkah berikut.
 
@@ -112,4 +112,4 @@ OLLAMA_MODEL=llama3.2:3b
 
 Setelah mengubah `.env`, jalankan `php artisan config:clear`.
 
-> Metrics pada seeder saat ini berasal dari checkpoint Google Colab yang telah diintegrasikan. Ganti kembali setelah model hasil retraining tersedia.
+> Metrics pada seeder berasal dari model final YOLO26s yang aktif dan evaluasi test independen di dalam paket Dataset 4.

@@ -19,10 +19,16 @@ Route::post('/install', [InstallationController::class, 'store'])
 Route::resource('experiments', TrainingRunController::class)
     ->parameters(['experiments' => 'trainingRun'])
     ->only(['index', 'create', 'store', 'show']);
-Route::post('/experiments/{trainingRun}/metrics', [TrainingRunController::class, 'importMetrics'])->name('experiments.metrics');
+Route::post('/experiments/{trainingRun}/metrics', [TrainingRunController::class, 'importMetrics'])
+    ->middleware('throttle:5,1')
+    ->name('experiments.metrics');
 
 Route::get('/experiments/{trainingRun}/summary', [SummaryController::class, 'show'])->name('summary.show');
-Route::post('/experiments/{trainingRun}/summary', [SummaryController::class, 'generate'])->name('summary.generate');
+Route::post('/experiments/{trainingRun}/summary', [SummaryController::class, 'generate'])
+    ->middleware('throttle:5,1')
+    ->name('summary.generate');
 
 Route::get('/detection', [DetectionController::class, 'index'])->name('detection.index');
-Route::post('/detection', [DetectionController::class, 'store'])->name('detection.store');
+Route::post('/detection', [DetectionController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('detection.store');

@@ -3,23 +3,24 @@
 @section('content')
 <div class="page-head"><div><p class="eyebrow">Experiment detail</p><h1>{{ $run->name }}</h1><p>{{ $run->dataset_name }} · {{ $run->model_version }}</p></div>@if($run->metrics)<a class="btn btn-primary" href="{{ route('summary.show',$run) }}">Analisis AI</a>@endif</div>
 <div class="grid metric-grid">
-@foreach([['mAP50-95',$run->metrics['map50_95']??null],['mAP50',$run->metrics['map50']??null],['Precision',$run->metrics['precision']??null],['Recall',$run->metrics['recall']??null]] as [$label,$value])
+@foreach([['mAP50-95',$run->metrics['map50_95']??null],['mAP50',$run->metrics['map50']??null],['Precision',$run->metrics['precision']??null],['Recall',$run->metrics['recall']??null],['F1',$run->metrics['f1']??null]] as [$label,$value])
 <div class="stat"><div class="stat-top">{{ $label }}</div><div class="stat-value">{{ $value===null?'—':number_format($value*100,1).'%' }}</div></div>@endforeach
 </div>
+@if(($run->metrics['evaluation_split'] ?? null) === 'test')<p class="hint" style="margin-top:10px">Metrics utama dihitung pada split test independen; training curve menggunakan split validation.</p>@endif
 <div class="grid dashboard-grid" style="margin-top:18px">
 <section class="card"><div class="card-title"><div><h2>Konfigurasi training</h2><p>Parameter yang digunakan di Google Colab</p></div></div><div class="grid settings-grid">
 @foreach(['Model'=>$run->model_version,'Epoch'=>$run->epochs,'Batch size'=>$run->batch_size,'Image size'=>$run->image_size.' px','Optimizer'=>$run->optimizer,'Device'=>$run->device] as $label=>$value)<div class="setting"><span>{{ $label }}</span><strong>{{ $value ?: '—' }}</strong></div>@endforeach
 </div>@if($run->notes)<p style="margin-top:18px;color:var(--muted)">{{ $run->notes }}</p>@endif</section>
 <section class="card"><div class="card-title"><div><h2>Kelas objek</h2><p>Pemetaan kelas model ke istilah assessment</p></div></div><div class="classes">
 @forelse($run->per_class_metrics??[] as $class=>$metric)
-<div class="setting"><strong style="text-transform:capitalize">{{ $class }}</strong><span>Kelas model: {{ $metric['source_class'] ?? $class }} @if(isset($metric['map50'])) · mAP50 {{ number_format($metric['map50']*100,1) }}% @elseif(isset($metric['map50_95'])) · mAP50-95 {{ number_format($metric['map50_95']*100,1) }}% @else · metric per kelas tidak tersedia @endif</span></div>
+<div class="setting"><strong style="text-transform:capitalize">{{ $class }}</strong><span>Kelas model: {{ $metric['source_class'] ?? $class }} @if(isset($metric['map50'])) · mAP50 {{ number_format($metric['map50']*100,1) }}%@endif @if(isset($metric['map50_95'])) · mAP50-95 {{ number_format($metric['map50_95']*100,1) }}%@endif</span></div>
 @empty
 <div class="empty">Hasil belum diimpor.</div>
 @endforelse
 </div></section></div>
 @if($run->results_plot_path || $run->confusion_matrix_path)
 <section class="card" style="margin-top:18px">
-<div class="card-title"><div><h2>Artefak evaluasi</h2><p>Grafik dan confusion matrix asli dari Google Colab.</p></div><span class="pill pill-success">Epoch terbaik {{ $run->metrics['best_epoch'] ?? '—' }}</span></div>
+<div class="card-title"><div><h2>Artefak evaluasi</h2><p>Grafik training serta evaluasi test asli dari Google Colab.</p></div><span class="pill pill-success">Epoch terbaik {{ $run->metrics['best_epoch'] ?? '—' }}</span></div>
 <div class="artifact-grid">
 @foreach([
     'Training Results' => $run->results_plot_path,
@@ -37,6 +38,7 @@
 </div>
 </section>
 @endif
+@if(config('deployment.allow_admin_writes'))
 <section class="card" style="margin-top:18px">
 <div class="card-title"><div><h2>Impor hasil dari Colab</h2><p>Gunakan nilai akhir dari validasi; unggah results.csv untuk menggambar training curve.</p></div><span class="pill pill-draft">0–1</span></div>
 <form method="post" action="{{ route('experiments.metrics',$run) }}" enctype="multipart/form-data">@csrf
@@ -46,4 +48,5 @@
 @foreach(['helm_map'=>'Helm mAP50-95','masker_map'=>'Masker mAP50-95','people_map'=>'People mAP50-95'] as $name=>$label)<div class="field"><label>{{ $label }}</label><input type="number" name="{{ $name }}" min="0" max="1" step="0.0001" value="{{ old($name) }}" placeholder="Opsional"></div>@endforeach
 </div><div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn btn-primary">Simpan hasil training</button></div></form>
 </section>
+@endif
 @endsection

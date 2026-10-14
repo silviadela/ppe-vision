@@ -22,9 +22,12 @@ npm-debug.log
 yarn-error.log
 /deploy/infinityfree/package/
 /deploy/infinityfree/ppe-vision-infinityfree.zip
+/deploy/infinityfree/update-safe/
 /auth.json
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+__pycache__/
+*.py[cod]

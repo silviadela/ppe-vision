@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import warnings
 from functools import lru_cache
 from pathlib import Path
 
@@ -13,6 +14,8 @@ from ultralytics import YOLO
 app = FastAPI(title="PPE Vision Inference API", version="1.0.0")
 
 MODEL_PATH = Path(os.getenv("YOLO_MODEL_PATH", Path(__file__).parent / "models" / "best.pt"))
+MAX_UPLOAD_BYTES = int(os.getenv("YOLO_MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
+Image.MAX_IMAGE_PIXELS = 40_000_000
 ALLOWED_CLASSES = {"helm", "masker", "people"}
 CLASS_ALIASES = {
     "hardhat": "helm",
@@ -67,8 +70,16 @@ async def predict(
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    payload = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(payload) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Ukuran gambar maksimum 10 MB")
+
     try:
-        image = Image.open(io.BytesIO(await file.read())).convert("RGB")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            image = Image.open(io.BytesIO(payload))
+            image.load()
+            image = image.convert("RGB")
     except Exception as exc:
         raise HTTPException(status_code=422, detail="File gambar tidak valid") from exc
 

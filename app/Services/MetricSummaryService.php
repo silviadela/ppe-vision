@@ -44,15 +44,20 @@ class MetricSummaryService
     {
         $metrics = $run->metrics ?? [];
         $classes = collect($run->per_class_metrics ?? [])
-            ->filter(fn ($item) => isset($item['map50_95']));
+            ->filter(fn ($item) => isset($item['map50_95']) || isset($item['map50']));
         $map = (float) ($metrics['map50_95'] ?? 0);
-        $weakest = $classes->sortBy(fn ($item) => $item['map50_95'] ?? 0)->keys()->first();
+        $weakest = $classes
+            ->sortBy(fn ($item) => $item['map50_95'] ?? $item['map50'] ?? 0)
+            ->keys()
+            ->first();
         $quality = $map >= .75 ? 'sangat baik' : ($map >= .55 ? 'cukup baik' : 'masih perlu ditingkatkan');
 
         $summary = "Model {$run->model_version} memiliki performa {$quality} dengan mAP50-95 ".number_format($map * 100, 1).'%. ';
         if ($weakest) {
-            $weakMetric = $classes[$weakest]['map50_95'] ?? 0;
-            $summary .= "Kelas yang paling perlu diperhatikan adalah {$weakest} (mAP50-95 ".number_format($weakMetric * 100, 1).'%). ';
+            $usesStrictMap = isset($classes[$weakest]['map50_95']);
+            $weakMetric = $classes[$weakest][$usesStrictMap ? 'map50_95' : 'map50'];
+            $metricLabel = $usesStrictMap ? 'mAP50-95' : 'mAP50';
+            $summary .= "Kelas yang paling perlu diperhatikan adalah {$weakest} ({$metricLabel} ".number_format($weakMetric * 100, 1).'%). ';
         }
         $summary .= 'Prioritaskan penambahan data pada kondisi cahaya rendah, objek kecil, dan kasus tertutup sebagian. '
             .'Periksa confusion matrix sebelum deployment dan uji confidence threshold pada video lapangan untuk menyeimbangkan false positive dan false negative.';
