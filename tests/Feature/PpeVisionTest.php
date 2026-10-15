@@ -66,9 +66,14 @@ class PpeVisionTest extends TestCase
             ->assertSee('75.4%');
     }
 
-    public function test_training_configuration_can_be_saved(): void
+    public function test_experiment_creation_is_not_exposed(): void
     {
-        $response = $this->post(route('experiments.store'), [
+        $this->completedRun();
+
+        $this->get('/')->assertOk()->assertDontSee('Eksperimen baru');
+        $this->get('/experiments')->assertOk()->assertDontSee('Eksperimen baru');
+        $this->get('/experiments/create')->assertNotFound();
+        $this->post('/experiments', [
             'name' => 'Colab Run 02',
             'model_version' => 'YOLO11n',
             'dataset_name' => 'PPE v2',
@@ -77,11 +82,9 @@ class PpeVisionTest extends TestCase
             'image_size' => 640,
             'optimizer' => 'AdamW',
             'device' => 'T4',
-        ]);
+        ])->assertMethodNotAllowed();
 
-        $run = TrainingRun::where('name', 'Colab Run 02')->firstOrFail();
-        $response->assertRedirect(route('experiments.show', $run));
-        $this->assertSame('draft', $run->status);
+        $this->assertDatabaseMissing('training_runs', ['name' => 'Colab Run 02']);
     }
 
     public function test_summary_uses_local_analysis_when_ollama_is_disabled(): void
@@ -148,6 +151,30 @@ class PpeVisionTest extends TestCase
         $this->assertStringContainsString('3. Uji confidence threshold di lapangan.', $run->ai_summary);
         Http::assertSent(fn ($request) => $request['stream'] === false
             && $request['format']['required'] === ['operational_risk', 'recommendations']);
+    }
+
+    public function test_invalid_ollama_response_is_labelled_as_rule_based_fallback(): void
+    {
+        config([
+            'services.ollama.enabled' => true,
+            'services.ollama.url' => 'http://ollama.test',
+            'services.ollama.model' => 'llama3.2:3b',
+        ]);
+        Http::fake([
+            'http://ollama.test/api/generate' => Http::response([
+                'response' => json_encode([
+                    'operational_risk' => 'Jawaban tidak membahas kelas yang lemah.',
+                    'recommendations' => ['Saran yang tidak sesuai.'],
+                ]),
+            ]),
+        ]);
+        $run = $this->completedRun();
+
+        $this->post(route('summary.generate', $run))->assertRedirect();
+
+        $run->refresh();
+        $this->assertSame('Analisis lokal berbasis aturan (bukan LLM)', $run->summary_generated_by);
+        $this->assertStringContainsString('### Risiko operasional', $run->ai_summary);
     }
 
     public function test_training_metrics_can_be_imported_manually(): void
@@ -247,6 +274,10 @@ class PpeVisionTest extends TestCase
         config(['deployment.infinityfree_install_token' => null]);
 
         $this->get('/install')->assertNotFound();
+
+        config(['deployment.infinityfree_install_token' => 'GANTI_DENGAN_TOKEN_ACAK_MINIMAL_32_KARAKTER']);
+
+        $this->get('/install')->assertNotFound();
     }
 
     public function test_production_mode_hides_admin_writes(): void
@@ -258,7 +289,7 @@ class PpeVisionTest extends TestCase
             'confusion_matrix_path' => 'training/run/confusion_matrix.png',
         ]);
 
-        $this->get(route('experiments.create'))->assertNotFound();
+        $this->get('/experiments/create')->assertNotFound();
         $this->post(route('experiments.metrics', $run), [])->assertNotFound();
         $this->post(route('summary.generate', $run))->assertNotFound();
         $this->get('/')->assertOk()->assertDontSee('+ Eksperimen baru');
@@ -270,13 +301,14 @@ class PpeVisionTest extends TestCase
 
     public function test_web_installer_runs_migrations_and_seeder_with_the_correct_token(): void
     {
-        config(['deployment.infinityfree_install_token' => 'test-install-token']);
+        $token = 'test-install-token-random-32-characters';
+        config(['deployment.infinityfree_install_token' => $token]);
 
         $this->get('/install')->assertOk()->assertSee('Instalasi database');
         $this->post('/install', ['install_token' => 'wrong-token'])
             ->assertSessionHasErrors('install_token');
 
-        $this->post('/install', ['install_token' => 'test-install-token'])
+        $this->post('/install', ['install_token' => $token])
             ->assertOk()
             ->assertSee('Instalasi berhasil');
 

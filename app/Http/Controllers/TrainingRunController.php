@@ -12,35 +12,6 @@ class TrainingRunController extends Controller
         return view('experiments.index', ['runs' => TrainingRun::latest()->paginate(10)]);
     }
 
-    public function create()
-    {
-        $this->ensureAdminWritesEnabled();
-
-        return view('experiments.create');
-    }
-
-    public function store(Request $request)
-    {
-        $this->ensureAdminWritesEnabled();
-
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'model_version' => ['required', 'string', 'max:50'],
-            'dataset_name' => ['nullable', 'string', 'max:100'],
-            'epochs' => ['required', 'integer', 'min:1', 'max:10000'],
-            'batch_size' => ['required', 'integer', 'min:1', 'max:1024'],
-            'image_size' => ['required', 'integer', 'min:32', 'max:4096'],
-            'optimizer' => ['nullable', 'string', 'max:50'],
-            'device' => ['nullable', 'string', 'max:50'],
-            'notes' => ['nullable', 'string', 'max:3000'],
-        ]);
-
-        $data['status'] = 'draft';
-        $run = TrainingRun::create($data);
-
-        return redirect()->route('experiments.show', $run)->with('success', 'Eksperimen berhasil dibuat.');
-    }
-
     public function show(TrainingRun $trainingRun)
     {
         return view('experiments.show', ['run' => $trainingRun]);

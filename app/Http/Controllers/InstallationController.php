@@ -52,7 +52,9 @@ class InstallationController extends Controller
             report($exception);
 
             return back()->withErrors([
-                'installation' => 'Instalasi gagal: '.$exception->getMessage(),
+                'installation' => app()->isProduction()
+                    ? 'Instalasi gagal. Periksa log aplikasi atau konfigurasi database.'
+                    : 'Instalasi gagal: '.$exception->getMessage(),
             ]);
         }
 
@@ -66,7 +68,7 @@ class InstallationController extends Controller
     private function ensureInstallerIsEnabled(): string
     {
         $token = trim((string) config('deployment.infinityfree_install_token'));
-        abort_if($token === '', 404);
+        abort_if($token === '' || str_starts_with($token, 'GANTI_'), 404);
 
         return $token;
     }

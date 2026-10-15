@@ -28,10 +28,16 @@ class MetricSummaryService
                 ])->throw()->json();
 
                 if (! empty($response['response'])) {
-                    return [
-                        'text' => $this->formatOllamaResponse($run, $response['response']),
-                        'engine' => 'Ollama · '.config('services.ollama.model'),
-                    ];
+                    $text = $this->formatOllamaResponse($run, $response['response']);
+
+                    // Jangan memberi label Ollama jika respons tidak lolos validasi
+                    // dan aplikasi harus menggunakan ringkasan berbasis aturan.
+                    if ($text !== null) {
+                        return [
+                            'text' => $text,
+                            'engine' => 'Ollama · '.config('services.ollama.model'),
+                        ];
+                    }
                 }
             } catch (Throwable $exception) {
                 report($exception);
@@ -96,22 +102,28 @@ class MetricSummaryService
         ];
     }
 
-    private function formatOllamaResponse(TrainingRun $run, string $response): string
+    private function formatOllamaResponse(TrainingRun $run, string $response): ?string
     {
         $content = json_decode($response, true);
         if (! is_array($content)
-            || ! isset($content['operational_risk'])
-            || ! is_array($content['recommendations'])) {
-            return $this->localSummary($run);
+            || ! is_string($content['operational_risk'] ?? null)
+            || ! is_array($content['recommendations'] ?? null)) {
+            return null;
         }
 
+        $risk = trim($content['operational_risk']);
         $recommendations = collect($content['recommendations'])
             ->filter(fn ($item) => is_string($item) && trim($item) !== '')
+            ->map(fn ($item) => trim($item))
             ->take(3)
             ->values();
 
-        if ($recommendations->count() !== 3) {
-            return $this->localSummary($run);
+        if ($risk === ''
+            || strlen($risk) > 1200
+            || count($content['recommendations']) !== 3
+            || $recommendations->count() !== 3
+            || $recommendations->contains(fn ($item) => strlen($item) > 600)) {
+            return null;
         }
 
         $weakest = collect($run->per_class_metrics ?? [])
@@ -119,23 +131,14 @@ class MetricSummaryService
             ->sortBy('map50_95')
             ->keys()
             ->first();
-        $weakestLabel = ucfirst((string) ($weakest ?: 'kelas terlemah'));
-        $risk = trim((string) $content['operational_risk']);
-        if ($weakest && ! str_contains(strtolower($risk), strtolower((string) $weakest))) {
-            $risk = "False negative pada kelas {$weakestLabel} perlu dipantau, terutama untuk objek kecil, tertutup sebagian, atau berada dalam pencahayaan rendah.";
-        }
-
         $recommendations = $recommendations->all();
-        if ($weakest) {
-            $recommendations[0] = "Tambah variasi data kelas {$weakestLabel}, terutama objek kecil, sudut berbeda, dan kondisi cahaya rendah.";
-        }
-        if (! str_contains(strtolower($recommendations[1]), 'confusion')
-            || str_contains(strtolower($recommendations[1]), 'akurasi')) {
-            $recommendations[1] = 'Tinjau false negative dan confusion matrix sebelum model dipakai pada kondisi nyata.';
-        }
-        if (! str_contains(strtolower($recommendations[2]), 'confidence')
-            || str_contains(strtolower($recommendations[2]), 'akurasi')) {
-            $recommendations[2] = 'Uji beberapa confidence threshold pada video lapangan untuk menyeimbangkan false positive dan false negative.';
+        $generatedText = strtolower($risk.' '.implode(' ', $recommendations));
+        if (($weakest && ! str_contains($generatedText, strtolower((string) $weakest)))
+            || ! str_contains(strtolower($recommendations[1]), 'confusion')
+            || ! str_contains(strtolower($recommendations[2]), 'confidence')
+            || str_contains($generatedText, 'akurasi')
+            || preg_match('/\d/u', $generatedText)) {
+            return null;
         }
 
         return $this->structuredSummary(

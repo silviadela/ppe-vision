@@ -530,7 +530,7 @@ with video_tab:
         )
         maximum_seconds = st.select_slider(
             "Durasi maksimum yang diproses",
-            options=[15, 30, 60, 120],
+            options=[15, 30, 60],
             value=30,
             key="video-duration",
         )

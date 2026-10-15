@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laporan Teknis PPE Vision</title>
+<style>
+@page { size:A4; margin:16mm 15mm 18mm; }
+* { box-sizing:border-box; }
+:root {
+  --ink:#17251f; --muted:#65726c; --green:#1f6b4f; --green2:#3f9672;
+  --deep:#183e31; --mint:#dff4e8; --paper:#f6f8f5; --line:#dfe7e2;
+  --amber:#d98c24; --red:#aa423b; --blue:#4f7f99; --white:#fff;
+}
+html { scroll-behavior:smooth; }
+body { margin:0; color:var(--ink); background:white; font:10.2pt/1.55 Arial,Helvetica,sans-serif; }
+h1,h2,h3,h4 { margin:0 0 7px; line-height:1.22; color:#102a21; }
+h1 { font-size:29pt; letter-spacing:-1px; }
+h2 { font-size:19pt; letter-spacing:-.3px; }
+h3 { margin-top:17px; font-size:13.5pt; }
+h4 { margin-top:13px; font-size:11pt; }
+p { margin:0 0 9px; }
+ul,ol { margin:6px 0 11px; padding-left:21px; }
+li { margin:3px 0; }
+a { color:var(--green); text-decoration:none; }
+code { font-family:Consolas,"Courier New",monospace; font-size:8.7pt; }
+pre { margin:9px 0 13px; padding:12px 14px; overflow-wrap:anywhere; white-space:pre-wrap; border:1px solid #d7e2dc; border-radius:9px; color:#e7f5ed; background:#173c31; font:8.2pt/1.45 Consolas,"Courier New",monospace; page-break-inside:avoid; }
+table { width:100%; margin:9px 0 15px; border-collapse:collapse; font-size:8.8pt; }
+th,td { padding:7px 8px; vertical-align:top; border:1px solid var(--line); }
+th { text-align:left; color:#173c31; background:#eaf5ee; }
+tr:nth-child(even) td { background:#fafcfb; }
+img { max-width:100%; }
+.cover { min-height:255mm; padding:21mm 16mm 16mm; display:flex; flex-direction:column; color:white; background:linear-gradient(145deg,#12382c 0%,#1f6b4f 62%,#6ab68d 100%); border-radius:0 0 24px 24px; page-break-after:always; }
+.cover .kicker { margin-bottom:24mm; color:#a8e4c2; font-size:9pt; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; }
+.cover h1 { max-width:155mm; color:white; font-size:34pt; }
+.cover .subtitle { max-width:160mm; margin-top:10px; color:#d9efe3; font-size:14pt; line-height:1.45; }
+.cover-grid { margin-top:20mm; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.cover-card { padding:13px; border:1px solid rgba(255,255,255,.25); border-radius:13px; background:rgba(255,255,255,.09); }
+.cover-card strong { display:block; margin-bottom:3px; font-size:16pt; }
+.cover-card span { color:#d7ece1; font-size:8.5pt; }
+.cover-meta { margin-top:auto; padding-top:18px; display:flex; justify-content:space-between; gap:20px; border-top:1px solid rgba(255,255,255,.25); color:#d7ece1; font-size:8.5pt; }
+.chapter { page-break-before:always; }
+.chapter.first { page-break-before:auto; }
+.chapter-head { margin-bottom:17px; padding-bottom:10px; border-bottom:3px solid var(--green); }
+.chapter-no { display:block; color:var(--green); font-size:8.5pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+.lead { color:#395149; font-size:11.3pt; line-height:1.6; }
+.note,.warning,.success { margin:11px 0 14px; padding:11px 13px; border-left:4px solid; border-radius:4px 10px 10px 4px; page-break-inside:avoid; }
+.note { border-color:var(--blue); background:#edf5f8; }
+.warning { border-color:var(--amber); background:#fff8e9; }
+.success { border-color:var(--green2); background:#edf8f1; }
+.small { color:var(--muted); font-size:8.2pt; }
+.pill { display:inline-block; padding:3px 7px; border-radius:99px; font-size:7.5pt; font-weight:700; }
+.ok { color:#1e6645; background:#dff4e8; }
+.partial { color:#785718; background:#fff0c9; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.card { padding:13px; border:1px solid var(--line); border-radius:12px; background:white; box-shadow:0 4px 16px rgba(23,37,31,.045); page-break-inside:avoid; }
+.card h3,.card h4 { margin-top:0; }
+.metric { padding:12px; border-radius:11px; background:#f2f8f4; border:1px solid #d7e8dd; }
+.metric strong { display:block; color:var(--green); font-size:18pt; }
+.metric span { color:var(--muted); font-size:8pt; }
+.figure { margin:12px 0 17px; padding:8px; border:1px solid var(--line); border-radius:12px; background:#fbfdfb; page-break-inside:avoid; }
+.figure img { display:block; width:100%; border-radius:7px; }
+.figure figcaption { padding:7px 4px 2px; color:var(--muted); font-size:8pt; }
+.figure.half img { max-height:95mm; object-fit:contain; }
+.toc { columns:2; column-gap:24px; margin-top:15px; }
+.toc a { display:block; margin:0 0 7px; padding-bottom:5px; border-bottom:1px dotted #becdc5; break-inside:avoid; }
+.diagram { margin:13px 0 17px; padding:14px; border:1px solid var(--line); border-radius:13px; background:var(--paper); page-break-inside:avoid; }
+.diagram-row { display:flex; align-items:stretch; justify-content:center; gap:7px; }
+.node { flex:1; min-width:0; padding:10px 7px; display:flex; flex-direction:column; justify-content:center; text-align:center; border:1px solid #bfd3c8; border-radius:10px; background:white; }
+.node strong { color:#173c31; }
+.node span { margin-top:3px; color:var(--muted); font-size:7.6pt; }
+.node.primary { color:white; border-color:var(--deep); background:var(--deep); }
+.node.primary strong,.node.primary span { color:white; }
+.node.ai { border-color:#d1bd86; background:#fff7df; }
+.arrow { align-self:center; flex:0 0 auto; color:var(--green); font-size:17pt; font-weight:700; }
+.branch { margin:7px auto; width:2px; height:13px; background:#9bb7a7; }
+.tree { padding:12px 14px; border-radius:10px; color:#def1e7; background:#173c31; font:8.2pt/1.52 Consolas,"Courier New",monospace; white-space:pre-wrap; page-break-inside:avoid; }
+.flow-step { display:grid; grid-template-columns:28px 1fr; gap:8px; margin:7px 0; page-break-inside:avoid; }
+.flow-step b { width:26px; height:26px; display:grid; place-items:center; color:white; border-radius:50%; background:var(--green); }
+.qa { margin:0 0 10px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; page-break-inside:avoid; }
+.qa strong { display:block; margin-bottom:4px; color:var(--green); }
+.check { color:#1e6b49; font-weight:700; }
+.muted { color:var(--muted); }
+.page-break { page-break-before:always; }
+.footer-note { margin-top:20px; padding-top:8px; border-top:1px solid var(--line); color:var(--muted); font-size:7.5pt; }
+@media print {
+  body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  a { color:var(--green); }
+  .no-print { display:none; }
+}
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="kicker">Assessment Object Detection · Dokumentasi Final</div>
+  <h1>Laporan Teknis Lengkap PPE Vision</h1>
+  <p class="subtitle">Panduan memahami seluruh hubungan kode, model YOLO, Laravel, Python, Streamlit, MySQL, Ollama, deployment, keamanan, dan evaluasi model—disusun untuk belajar serta persiapan presentasi/rekrutmen.</p>
+  <div class="cover-grid">
+    <div class="cover-card"><strong>3 kelas</strong><span>Helm · Masker · People</span></div>
+    <div class="cover-card"><strong>69,3%</strong><span>mAP50-95 test independen</span></div>
+    <div class="cover-card"><strong>14 / 75</strong><span>test lulus / assertions</span></div>
+  </div>
+  <div class="cover-meta">
+    <div><strong>Proyek:</strong> PPE Vision<br><strong>Repository:</strong> github.com/silviadela/ppe-vision</div>
+    <div><strong>Versi audit:</strong> commit f7247b9<br><strong>Tanggal:</strong> 15 Oktober 2026</div>
+  </div>
+</section>
+
+<section class="chapter first" id="cara-pakai">
+  <div class="chapter-head"><span class="chapter-no">Panduan membaca</span><h2>Cara menggunakan laporan ini</h2></div>
+  <p class="lead">Laporan ini dibuat dalam urutan “gambaran besar → alur → kode → deployment → pertanyaan wawancara”. Bila waktu belajar terbatas, gunakan jalur cepat berikut.</p>
+  <div class="grid3">
+    <div class="card"><h3>15 menit</h3><p>Baca Bab 1, 2, 6, 9, dan ringkasan presentasi pada Bab 18.</p></div>
+    <div class="card"><h3>60 menit</h3><p>Tambahkan Bab 4, 7, 8, 10, 12, dan 13 untuk memahami implementasi.</p></div>
+    <div class="card"><h3>Mendalam</h3><p>Baca semuanya sambil membuka file yang dicantumkan pada setiap bagian.</p></div>
+  </div>
+  <div class="note"><strong>Prinsip utama proyek:</strong> Laravel adalah portal utama; Python menjalankan YOLO; Streamlit menyediakan demo online; MySQL menyimpan data; Ollama menghasilkan penjelasan lokal; seluruh angka metrik tetap berasal dari database agar AI tidak “mengarang angka”.</div>
+  <h3>Daftar isi</h3>
+  <div class="toc">
+    <a href="#syarat">1. Pemetaan syarat assessment</a>
+    <a href="#arsitektur">2. Arsitektur sistem</a>
+    <a href="#stack">3. Teknologi dan versi</a>
+    <a href="#folder">4. Peta folder dan tanggung jawab</a>
+    <a href="#training">5. Dataset, training, dan pemilihan model</a>
+    <a href="#metrik">6. Metrik dan interpretasi hasil</a>
+    <a href="#inferensi">7. Alur inferensi YOLO</a>
+    <a href="#laravel">8. Cara kerja Laravel</a>
+    <a href="#ollama">9. Integrasi Ollama dan kontrol halusinasi</a>
+    <a href="#database">10. Database dan hubungan data</a>
+    <a href="#ui">11. UI/UX dan halaman aplikasi</a>
+    <a href="#deploy">12. Deployment online</a>
+    <a href="#security">13. Keamanan</a>
+    <a href="#testing">14. Pengujian dan audit</a>
+    <a href="#aktif">15. File aktif, pendukung, dan opsional</a>
+    <a href="#local">16. Menjalankan sistem lokal</a>
+    <a href="#troubleshoot">17. Troubleshooting</a>
+    <a href="#presentasi">18. Naskah presentasi</a>
+    <a href="#qa">19. Pertanyaan wawancara dan jawaban</a>
+    <a href="#glosarium">20. Glosarium dan link final</a>
+  </div>
+</section>
+
+<section class="chapter" id="syarat">
+  <div class="chapter-head"><span class="chapter-no">Bab 1</span><h2>Pemetaan syarat assessment</h2></div>
+  <figure class="figure half"><img src="assets/assessment-requirements.png" alt="Syarat assessment"><figcaption>Gambar syarat assessment yang menjadi dasar audit implementasi.</figcaption></figure>
+  <table>
+    <thead><tr><th>Syarat</th><th>Status</th><th>Bukti implementasi</th><th>Penjelasan singkat</th></tr></thead>
+    <tbody>
+      <tr><td>Object Detection memakai YOLO dan Python</td><td><span class="pill ok">Terpenuhi</span></td><td><code>inference_service/main.py</code>, <code>streamlit_app/app.py</code>, <code>best.pt</code></td><td>Ultralytics YOLO dipanggil dari Python untuk inferensi gambar, video, dan kamera.</td></tr>
+      <tr><td>Kelas Helm, Masker, People</td><td><span class="pill ok">Terpenuhi</span></td><td><code>model-info.json</code>, <code>CLASS_ALIASES</code></td><td>Kelas sumber <em>Helmet, Mask, Person</em> dipetakan menjadi istilah aplikasi <em>helm, masker, people</em>.</td></tr>
+      <tr><td>Matriks hasil training: precision, recall, mAP, dsb.</td><td><span class="pill ok">Terpenuhi</span></td><td>Dashboard, detail eksperimen, grafik training, confusion matrix, PR/F1/P/R curve</td><td>Angka utama berasal dari 212 gambar test independen; training curve berasal dari validation per epoch.</td></tr>
+      <tr><td>Satu halaman AI untuk merangkum hasil</td><td><span class="pill ok">Terpenuhi</span></td><td><code>/experiments/1/summary</code>, <code>MetricSummaryService.php</code></td><td>Ollama lokal menulis risiko dan rekomendasi; angka dihasilkan deterministik dari database.</td></tr>
+      <tr><td>Web app untuk setting training, hasil, dan demo</td><td><span class="pill ok">Terpenuhi</span></td><td>Menu Eksperimen, Dashboard, Demo Deteksi</td><td>Form tulis aktif pada lingkungan lokal; pada production dinonaktifkan untuk keamanan, tetapi hasil tetap dapat dilihat.</td></tr>
+      <tr><td>Point plus: Laravel UI/UX</td><td><span class="pill ok">Terpenuhi</span></td><td>Laravel 12, Blade, CSS responsif, Vite</td><td>Laravel menjadi website utama, bukan sekadar wrapper atau halaman tautan.</td></tr>
+      <tr><td>Point plus: AI lokal Ollama/Llama</td><td><span class="pill ok">Terpenuhi</span></td><td>Ollama 0.40.4, <code>llama3.2:3b</code></td><td>AI dijalankan lokal, hasil disimpan ke database, lalu dapat ditampilkan online tanpa membuka Ollama ke internet.</td></tr>
+      <tr><td>Point plus: bisa diakses online</td><td><span class="pill ok">Terpenuhi</span></td><td>InfinityFree + Streamlit Community Cloud</td><td>Portal, data, metrik, AI summary, dan demo tersedia melalui link publik.</td></tr>
+    </tbody>
+  </table>
+  <div class="success"><strong>Kesimpulan kepatuhan:</strong> seluruh syarat inti dan tiga point plus telah diimplementasikan. Batasannya bukan syarat yang hilang, melainkan karakter hosting gratis: Streamlit dapat mengalami cold start dan Ollama lokal tidak dapat dipanggil langsung oleh server InfinityFree.</div>
+</section>
+
+<section class="chapter" id="arsitektur">
+  <div class="chapter-head"><span class="chapter-no">Bab 2</span><h2>Arsitektur sistem: siapa terhubung ke siapa?</h2></div>
+  <p class="lead">Sistem sengaja dipisah menjadi beberapa komponen karena InfinityFree hanya menjalankan PHP/MySQL, sedangkan YOLO memerlukan Python, PyTorch, dan resource inferensi.</p>
+  <h3>Arsitektur production yang aktif</h3>
+  <div class="diagram">
+    <div class="diagram-row">
+      <div class="node"><strong>Pengguna / Recruiter</strong><span>Browser</span></div><div class="arrow">→</div>
+      <div class="node primary"><strong>Laravel 12</strong><span>InfinityFree · portal utama</span></div><div class="arrow">↔</div>
+      <div class="node"><strong>MySQL</strong><span>Training run, metrik, summary</span></div>
+    </div>
+    <div class="branch"></div>
+    <div class="diagram-row">
+      <div class="node"><strong>Halaman /detection</strong><span>iframe dengan izin kamera</span></div><div class="arrow">→</div>
+      <div class="node ai"><strong>Streamlit Cloud</strong><span>Python + Ultralytics + OpenCV</span></div><div class="arrow">→</div>
+      <div class="node"><strong>best.pt</strong><span>YOLO26s · 3 kelas</span></div>
+    </div>
+  </div>
+  <h3>Arsitektur AI summary</h3>
+  <div class="diagram">
+    <div class="diagram-row">
+      <div class="node"><strong>Metrik DB</strong><span>Angka sumber kebenaran</span></div><div class="arrow">→</div>
+      <div class="node primary"><strong>MetricSummaryService</strong><span>Prompt + schema + validasi</span></div><div class="arrow">↔</div>
+      <div class="node ai"><strong>Ollama lokal</strong><span>llama3.2:3b</span></div><div class="arrow">→</div>
+      <div class="node"><strong>Summary tersimpan</strong><span>MySQL / seeder</span></div>
+    </div>
+  </div>
+  <p>Ollama berjalan pada komputer pengembang di <code>127.0.0.1:11434</code>. Server InfinityFree tidak dapat mengakses alamat lokal tersebut. Karena itu summary dibuat saat lokal, disimpan sebagai Markdown terstruktur, kemudian ditanam melalui seeder ke database production. Pendekatan ini tetap memenuhi “AI lokal” sekaligus membuat halaman online stabil.</p>
+  <h3>Arsitektur pengembangan lokal alternatif</h3>
+  <div class="diagram">
+    <div class="diagram-row">
+      <div class="node"><strong>Browser</strong><span>127.0.0.1:8000</span></div><div class="arrow">→</div>
+      <div class="node primary"><strong>Laravel</strong><span>Form gambar + penyimpanan riwayat</span></div><div class="arrow">→</div>
+      <div class="node ai"><strong>FastAPI</strong><span>127.0.0.1:8001</span></div><div class="arrow">→</div>
+      <div class="node"><strong>best.pt</strong><span>Inferensi YOLO</span></div>
+    </div>
+  </div>
+  <div class="note"><strong>Kalimat mudah diingat:</strong> “Laravel mengatur pengalaman pengguna dan data; Python menjalankan AI; Streamlit membawa AI Python ke internet; Ollama menjelaskan hasil secara lokal.”</div>
+</section>
+
+<section class="chapter" id="stack">
+  <div class="chapter-head"><span class="chapter-no">Bab 3</span><h2>Teknologi, versi, dan alasan pemilihan</h2></div>
+  <table>
+    <thead><tr><th>Teknologi</th><th>Versi audit</th><th>Peran</th><th>Alasan</th></tr></thead>
+    <tbody>
+      <tr><td>Laravel Framework</td><td>12.69.3</td><td>Portal, routing, validasi, DB, UI</td><td>Memenuhi point plus Laravel dan memberi struktur MVC yang jelas untuk dipresentasikan.</td></tr>
+      <tr><td>PHP</td><td>8.2.12 lokal; 8.4.25 hosting</td><td>Runtime Laravel</td><td>Kompatibel dengan requirement Composer <code>^8.2</code>.</td></tr>
+      <tr><td>MySQL</td><td>InfinityFree, port 3306</td><td>Database production persisten</td><td>Tersedia gratis di InfinityFree dan cocok dengan Eloquent/migration Laravel.</td></tr>
+      <tr><td>SQLite</td><td>Lokal/test</td><td>Database pengembangan</td><td>Setup cepat tanpa server database terpisah.</td></tr>
+      <tr><td>Python</td><td>3.12.10</td><td>Inferensi dan demo AI</td><td>Ekosistem utama Ultralytics, PyTorch, OpenCV, dan Streamlit.</td></tr>
+      <tr><td>Ultralytics</td><td>8.4.176</td><td>Memuat dan menjalankan checkpoint YOLO</td><td>API prediksi konsisten untuk gambar/video dan menyediakan speed serta bounding box.</td></tr>
+      <tr><td>PyTorch</td><td>2.14.1+cpu lokal</td><td>Backend model</td><td>Runtime neural network yang digunakan Ultralytics.</td></tr>
+      <tr><td>FastAPI</td><td>0.143.0</td><td>API inferensi lokal</td><td>Ringan, validasi request baik, dan mudah dihubungkan dengan Laravel melalui HTTP.</td></tr>
+      <tr><td>Streamlit</td><td>1.65.0</td><td>Demo online gambar/video/kamera</td><td>Dapat menjalankan Python pada hosting gratis dan mudah ditanam sebagai iframe.</td></tr>
+      <tr><td>Ollama</td><td>0.40.4</td><td>Runtime LLM lokal</td><td>Privat, tidak memerlukan API key, dan sesuai point plus AI lokal.</td></tr>
+      <tr><td>Llama</td><td>llama3.2:3b, ±2 GB</td><td>Menulis risiko/rekomendasi</td><td>Cukup ringan untuk laptop, mendukung Bahasa Indonesia, dan respons terstruktur.</td></tr>
+      <tr><td>Vite</td><td>6.x</td><td>Build CSS/JS</td><td>Menghasilkan asset production yang dapat diunggah tanpa Node.js di server.</td></tr>
+      <tr><td>FileZilla</td><td>Client FTP</td><td>Upload ke InfinityFree</td><td>InfinityFree gratis tidak menyediakan SSH/Composer/NPM.</td></tr>
+    </tbody>
+  </table>
+  <div class="warning"><strong>Mengapa bukan satu server?</strong> Menjalankan Laravel, MySQL, PyTorch, model 20 MB, Ollama 2 GB, dan pemrosesan video pada satu free hosting tidak realistis. Pemisahan layanan adalah keputusan arsitektur berdasarkan kemampuan runtime, bukan duplikasi aplikasi.</div>
+</section>
+
+<section class="chapter" id="folder">
+  <div class="chapter-head"><span class="chapter-no">Bab 4</span><h2>Peta folder dan tanggung jawab</h2></div>
+  <div class="tree">test_wingsgrup/
+├── app/
+│   ├── Http/Controllers/       # Menerima request dan memilih response
+│   ├── Models/                 # TrainingRun dan Detection (Eloquent)
+│   └── Services/               # Integrasi YOLO API dan Ollama
+├── config/                     # Membaca variabel .env ke konfigurasi aplikasi
+├── database/
+│   ├── migrations/             # Struktur tabel
+│   ├── seeders/                # Data model final dan summary
+│   └── data/                   # Metrik JSON/CSV asli
+├── inference_service/
+│   ├── main.py                 # FastAPI lokal
+│   └── models/best.pt          # Checkpoint final
+├── streamlit_app/app.py        # Demo online gambar/video/kamera
+├── resources/
+│   ├── views/                  # Blade UI
+│   └── css/app.css             # Desain responsif
+├── public/training/            # Grafik dan artefak evaluasi
+├── routes/web.php              # Daftar URL → controller
+├── deploy/infinityfree/        # Build package + .htaccess + update-safe
+├── tests/Feature/              # Pengujian end-to-end Laravel
+└── docs/ppe-vision-report/     # Laporan ini</div>
+  <h3>Hubungan file paling penting</h3>
+  <table>
+    <thead><tr><th>Mulai dari</th><th>Terhubung ke</th><th>Tujuan</th></tr></thead>
+    <tbody>
+      <tr><td><code>routes/web.php</code></td><td>Controller</td><td>Memetakan URL ke aksi aplikasi.</td></tr>
+      <tr><td>Controller</td><td>Model / Service / View</td><td>Mengatur alur request tanpa mencampur logika eksternal dengan HTML.</td></tr>
+      <tr><td><code>TrainingRun</code></td><td><code>training_runs</code></td><td>Menyimpan konfigurasi, metrik, artefak, history, summary.</td></tr>
+      <tr><td><code>MetricSummaryService</code></td><td>Ollama API</td><td>Mengirim prompt terstruktur dan memvalidasi jawaban.</td></tr>
+      <tr><td><code>YoloInferenceService</code></td><td>FastAPI <code>/health</code> dan <code>/predict</code></td><td>Integrasi inferensi lokal.</td></tr>
+      <tr><td><code>DetectionController@index</code></td><td>Streamlit URL</td><td>Membuat URL <code>?embed=true</code> untuk iframe online.</td></tr>
+      <tr><td><code>DatabaseSeeder</code></td><td>JSON/CSV + MySQL</td><td>Menempatkan model final dan hasil audit ke database production.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="chapter" id="training">
+  <div class="chapter-head"><span class="chapter-no">Bab 5</span><h2>Dataset, training, dan pemilihan model final</h2></div>
+  <div class="grid3">
+    <div class="metric"><strong>3.025</strong><span>gambar train</span></div>
+    <div class="metric"><strong>603</strong><span>gambar validation</span></div>
+    <div class="metric"><strong>212</strong><span>gambar test independen</span></div>
+  </div>
+  <h3>Model final</h3>
+  <table>
+    <tbody>
+      <tr><th>Nama eksperimen</th><td>PPE YOLO26s Dataset 4 Final</td><th>Arsitektur</th><td>YOLO26s</td></tr>
+      <tr><th>Dataset</th><td>PPE Detection and Compliance v5</td><th>Epoch</th><td>60 (best epoch 58)</td></tr>
+      <tr><th>Image size</th><td>640 px</td><th>Batch</th><td>16</td></tr>
+      <tr><th>Optimizer</th><td>AdamW</td><th>lr0</th><td>0,0005</td></tr>
+      <tr><th>Momentum</th><td>0,9</td><th>Weight decay</th><td>0,0001</td></tr>
+      <tr><th>Checkpoint</th><td colspan="3"><code>inference_service/models/best.pt</code> · 20.316.805 byte · SHA-256 <code>c852c3a7…b12a0e9f</code></td></tr>
+    </tbody>
+  </table>
+  <h3>Mengapa menggunakan random search?</h3>
+  <p>Hyperparameter seperti learning rate, momentum, dan weight decay memengaruhi cara model belajar. Lima trial pendek dijalankan selama 20 epoch pada 60% data. Trial 4 memiliki skor gabungan tertinggi pada catatan eksperimen, sehingga konfigurasinya dipakai untuk final training 60 epoch pada seluruh data train.</p>
+  <table>
+    <thead><tr><th>Trial</th><th>lr0</th><th>Momentum</th><th>Weight decay</th><th>Precision</th><th>Recall</th><th>mAP50-95</th><th>Skor</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>0,0005</td><td>0,95</td><td>0,0001</td><td>83,8%</td><td>73,8%</td><td>50,8%</td><td>0,6823</td></tr>
+      <tr><td>2</td><td>0,0005</td><td>0,90</td><td>0,0010</td><td>80,2%</td><td>75,1%</td><td>51,5%</td><td>0,6822</td></tr>
+      <tr><td>3</td><td>0,0020</td><td>0,95</td><td>0,0001</td><td>82,5%</td><td>72,7%</td><td>47,6%</td><td>0,6626</td></tr>
+      <tr><td><strong>4</strong></td><td><strong>0,0005</strong></td><td><strong>0,90</strong></td><td><strong>0,0001</strong></td><td><strong>81,1%</strong></td><td><strong>76,5%</strong></td><td><strong>50,4%</strong></td><td><strong>0,6848</strong></td></tr>
+      <tr><td>5</td><td>0,0020</td><td>0,90</td><td>0,0010</td><td>80,3%</td><td>75,6%</td><td>48,3%</td><td>0,6722</td></tr>
+    </tbody>
+  </table>
+  <h3>Pemisahan data yang benar</h3>
+  <ul>
+    <li><strong>Train:</strong> digunakan untuk memperbarui bobot model.</li>
+    <li><strong>Validation:</strong> dipantau setiap epoch untuk melihat proses belajar dan memilih checkpoint.</li>
+    <li><strong>Test:</strong> hanya untuk evaluasi akhir. Karena tidak dipakai melatih/menyetel model, angkanya lebih jujur untuk generalisasi.</li>
+  </ul>
+  <figure class="figure"><img src="../../public/training/ppe-yolo26s-dataset4-final/results.png" alt="Training results"><figcaption>Kurva training/validation 60 epoch. Dashboard menandai bahwa kurva per epoch berasal dari validation, sementara kartu utama berasal dari test independen.</figcaption></figure>
+</section>
+
+<section class="chapter" id="metrik">
+  <div class="chapter-head"><span class="chapter-no">Bab 6</span><h2>Metrik model dan cara menjelaskannya</h2></div>
+  <div class="grid3">
+    <div class="metric"><strong>95,5%</strong><span>Precision test</span></div>
+    <div class="metric"><strong>90,7%</strong><span>Recall test</span></div>
+    <div class="metric"><strong>93,0%</strong><span>F1 test</span></div>
+    <div class="metric"><strong>95,7%</strong><span>mAP50 test</span></div>
+    <div class="metric"><strong>69,3%</strong><span>mAP50-95 test</span></div>
+    <div class="metric"><strong>Masker</strong><span>kelas terlemah · 63,4%</span></div>
+  </div>
+  <h3>Definisi sederhana</h3>
+  <table>
+    <thead><tr><th>Metrik</th><th>Rumus / makna</th><th>Cara membaca hasil proyek</th></tr></thead>
+    <tbody>
+      <tr><td>Precision</td><td><code>TP / (TP + FP)</code>. Dari semua deteksi yang dibuat, berapa yang benar?</td><td>95,5% menunjukkan false positive relatif rendah.</td></tr>
+      <tr><td>Recall</td><td><code>TP / (TP + FN)</code>. Dari semua objek yang seharusnya ditemukan, berapa yang berhasil ditemukan?</td><td>90,7% baik, tetapi masih ada risiko objek terlewat (false negative).</td></tr>
+      <tr><td>F1</td><td><code>2 × P × R / (P + R)</code>. Keseimbangan precision dan recall.</td><td>93,0% menunjukkan keseimbangan kuat.</td></tr>
+      <tr><td>IoU</td><td>Luas irisan bounding box dibagi luas gabungan.</td><td>Mengukur ketepatan posisi kotak prediksi terhadap label.</td></tr>
+      <tr><td>AP</td><td>Luas di bawah precision–recall curve untuk satu kelas.</td><td>Meringkas performa kelas pada berbagai threshold.</td></tr>
+      <tr><td>mAP50</td><td>Rata-rata AP pada IoU 0,50.</td><td>95,7%; objek umumnya ditemukan dan kotaknya cukup bertumpuk.</td></tr>
+      <tr><td>mAP50-95</td><td>Rata-rata AP pada IoU 0,50 sampai 0,95.</td><td>69,3%; lebih ketat karena menilai ketepatan lokasi kotak pada banyak IoU.</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><strong>Mengapa mAP50 tinggi tetapi mAP50-95 lebih rendah?</strong> mAP50 cukup puas jika kotak overlap 50%. mAP50-95 juga menguji overlap sangat ketat sampai 95%. Selisih ini berarti klasifikasi objek sudah kuat, tetapi posisi/ukuran bounding box masih dapat diperbaiki.</div>
+  <h3>Per kelas pada test independen</h3>
+  <table>
+    <thead><tr><th>Kelas aplikasi</th><th>Kelas model</th><th>Precision</th><th>Recall</th><th>F1</th><th>mAP50</th><th>mAP50-95</th></tr></thead>
+    <tbody>
+      <tr><td>Helm</td><td>Helmet</td><td>96,3%</td><td>89,5%</td><td>92,8%</td><td>96,2%</td><td>69,1%</td></tr>
+      <tr><td>Masker</td><td>Mask</td><td>92,9%</td><td>87,5%</td><td>90,1%</td><td>93,1%</td><td><strong>63,4%</strong></td></tr>
+      <tr><td>People</td><td>Person</td><td>97,2%</td><td>95,1%</td><td>96,2%</td><td>97,7%</td><td>75,4%</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Interpretasi:</strong> People paling stabil; Masker paling sulit karena ukuran relatif kecil, variasi bentuk/warna, occlusion pada wajah, sudut, cahaya, dan potensi label masker semuka. Perbaikan berikutnya harus fokus pada kualitas anotasi dan variasi data Masker.</p>
+  <div class="grid2">
+    <figure class="figure"><img src="../../public/training/ppe-yolo26s-dataset4-final/confusion_matrix_normalized.png" alt="Normalized confusion matrix"><figcaption>Normalized confusion matrix untuk membaca kelas yang tertukar atau terlewat.</figcaption></figure>
+    <figure class="figure"><img src="../../public/training/ppe-yolo26s-dataset4-final/BoxPR_curve.png" alt="Precision recall curve"><figcaption>Precision–Recall curve menunjukkan trade-off precision dan recall pada berbagai confidence threshold.</figcaption></figure>
+  </div>
+</section>
+
+<section class="chapter" id="inferensi">
+  <div class="chapter-head"><span class="chapter-no">Bab 7</span><h2>Alur inferensi YOLO: dari input sampai bounding box</h2></div>
+  <div class="flow-step"><b>1</b><div><strong>Input</strong><br>Pengguna memilih gambar, video, atau foto kamera di Streamlit.</div></div>
+  <div class="flow-step"><b>2</b><div><strong>Validasi</strong><br>Format, ukuran, dan nilai confidence diperiksa. FastAPI membatasi gambar 10 MB; Streamlit membatasi pilihan format UI.</div></div>
+  <div class="flow-step"><b>3</b><div><strong>Load model</strong><br><code>best.pt</code> dimuat satu kali melalui cache agar request berikutnya lebih cepat.</div></div>
+  <div class="flow-step"><b>4</b><div><strong>Predict</strong><br>Ultralytics menjalankan <code>model.predict(..., conf=threshold, imgsz=image_size)</code>.</div></div>
+  <div class="flow-step"><b>5</b><div><strong>Normalisasi kelas</strong><br><code>Helmet → helm</code>, <code>Mask → masker</code>, <code>Person → people</code>.</div></div>
+  <div class="flow-step"><b>6</b><div><strong>Output</strong><br>Sistem menggambar bounding box, label, confidence, membuat tabel, menghitung jumlah kelas, dan mencatat waktu inferensi.</div></div>
+  <pre>CLASS_ALIASES = {
+    "helmet": "helm",
+    "mask": "masker",
+    "person": "people",
+}
+
+result = model.predict(
+    source=frame,
+    conf=confidence,
+    imgsz=image_size,
+    verbose=False,
+)[0]</pre>
+  <h3>Mengapa tiga kelas tidak selalu tampil sekaligus?</h3>
+  <p>Model memiliki tiga kelas, tetapi output hanya berisi kelas yang benar-benar terdeteksi pada input dan melewati confidence threshold. Jika gambar hanya berisi orang dan helm, keluaran Masker bisa nol. Nilai nol bukan berarti kelas hilang dari model.</p>
+  <h3>Confidence threshold</h3>
+  <ul>
+    <li>Threshold rendah: lebih banyak objek ditemukan, tetapi false positive dapat meningkat.</li>
+    <li>Threshold tinggi: prediksi lebih selektif, tetapi false negative dapat meningkat.</li>
+    <li>Default proyek 0,20 dipilih agar objek PPE kecil tidak mudah terlewat; tetap perlu diuji pada kondisi lapangan.</li>
+  </ul>
+  <h3>Perbedaan gambar, video, dan kamera</h3>
+  <table>
+    <thead><tr><th>Mode</th><th>Cara kerja</th><th>Catatan</th></tr></thead>
+    <tbody>
+      <tr><td>Gambar</td><td>Satu frame → satu prediksi → bounding box + tabel.</td><td>Paling cepat untuk demo.</td></tr>
+      <tr><td>Video</td><td>OpenCV membaca frame; <code>frame_stride</code> dapat melewati sebagian frame; hasil dikodekan kembali.</td><td>FFmpeg mengubah output ke MP4; audio tidak disertakan.</td></tr>
+      <tr><td>Kamera</td><td><code>st.camera_input</code> mengambil satu foto lalu diprediksi.</td><td>Tidak membutuhkan STUN/TURN karena bukan streaming real-time.</td></tr>
+    </tbody>
+  </table>
+  <figure class="figure"><img src="assets/streamlit-online.png" alt="Demo Streamlit online"><figcaption>Demo online aktif: status model siap dan tiga mode input tersedia. Streamlit dapat tidur setelah tidak aktif, sehingga cold start 1–3 menit adalah karakteristik paket gratis.</figcaption></figure>
+</section>
+
+<section class="chapter" id="laravel">
+  <div class="chapter-head"><span class="chapter-no">Bab 8</span><h2>Cara kerja Laravel dari route hingga tampilan</h2></div>
+  <h3>Pola MVC + Service</h3>
+  <div class="diagram">
+    <div class="diagram-row">
+      <div class="node"><strong>Route</strong><span>URL dan HTTP method</span></div><div class="arrow">→</div>
+      <div class="node primary"><strong>Controller</strong><span>Validasi dan alur request</span></div><div class="arrow">↔</div>
+      <div class="node"><strong>Model / Service</strong><span>DB atau sistem eksternal</span></div><div class="arrow">→</div>
+      <div class="node"><strong>Blade View</strong><span>HTML yang dilihat pengguna</span></div>
+    </div>
+  </div>
+  <h3>Daftar route penting</h3>
+  <table>
+    <thead><tr><th>Method + URL</th><th>Controller</th><th>Fungsi</th></tr></thead>
+    <tbody>
+      <tr><td>GET <code>/</code></td><td>DashboardController@index</td><td>Menampilkan eksperimen terakhir, metrik, curve, dan per kelas.</td></tr>
+      <tr><td>GET <code>/experiments</code></td><td>TrainingRunController@index</td><td>Daftar eksperimen.</td></tr>
+      <tr><td>GET <code>/experiments/{id}</code></td><td>TrainingRunController@show</td><td>Konfigurasi dan artefak training.</td></tr>
+      <tr><td>POST <code>/experiments/{id}/metrics</code></td><td>TrainingRunController@importMetrics</td><td>Impor metrik/CSV saat mode admin lokal aktif.</td></tr>
+      <tr><td>GET/POST <code>/experiments/{id}/summary</code></td><td>SummaryController</td><td>Melihat atau menghasilkan AI summary.</td></tr>
+      <tr><td>GET/POST <code>/detection</code></td><td>DetectionController</td><td>Embed Streamlit atau fallback FastAPI lokal.</td></tr>
+      <tr><td>GET/POST <code>/install</code></td><td>InstallationController</td><td>Migrasi/seeding sekali pakai tanpa SSH.</td></tr>
+    </tbody>
+  </table>
+  <h3>Contoh koneksi Laravel ke konfigurasi layanan</h3>
+  <pre>// config/services.php
+'yolo'      => ['url' => env('YOLO_API_URL')],
+'streamlit' => ['url' => env('STREAMLIT_DEMO_URL')],
+'ollama'    => [
+    'enabled' => env('OLLAMA_ENABLED', false),
+    'url'     => env('OLLAMA_URL', 'http://127.0.0.1:11434'),
+    'model'   => env('OLLAMA_MODEL', 'llama3.2:3b'),
+];</pre>
+  <p><code>.env</code> tidak dipanggil langsung di banyak tempat. Nilai dibaca oleh file config, lalu kode memanggil <code>config(...)</code>. Ini mengikuti praktik Laravel dan memudahkan cache konfigurasi.</p>
+  <h3>Koneksi Laravel ke Streamlit</h3>
+  <pre>$streamlitUrl = filter_var(config('services.streamlit.url'), FILTER_VALIDATE_URL);
+$streamlitEmbedUrl = $streamlitUrl . '?embed=true';
+
+&lt;iframe src="{{ $streamlitEmbedUrl }}"
+        allow="camera; autoplay; fullscreen"&gt;&lt;/iframe&gt;</pre>
+  <p>Iframe membuat pengguna tetap berada pada layout Laravel. Atribut <code>allow="camera"</code> diperlukan agar tab Kamera Streamlit dapat meminta izin browser. Header CSP di root <code>.htaccess</code> hanya mengizinkan frame dari <code>*.streamlit.app</code>.</p>
+  <h3>Koneksi Laravel ke FastAPI lokal</h3>
+  <pre>return Http::timeout(120)
+    ->attach('file', fopen($file->getRealPath(), 'r'), $file->getClientOriginalName())
+    ->post(rtrim($url, '/') . '/predict', ['confidence' => $confidence])
+    ->throw()
+    ->json();</pre>
+  <p><code>YoloInferenceService</code> memisahkan komunikasi HTTP dari controller. Controller fokus menyimpan file dan riwayat; service fokus berkomunikasi dengan Python.</p>
+</section>
+
+<section class="chapter" id="ollama">
+  <div class="chapter-head"><span class="chapter-no">Bab 9</span><h2>Ollama: alasan, integrasi, dan kontrol halusinasi</h2></div>
+  <h3>Mengapa Ollama?</h3>
+  <ul>
+    <li><strong>Lokal dan privat:</strong> data metrik tidak perlu dikirim ke API pihak ketiga.</li>
+    <li><strong>Tanpa API key/biaya per request:</strong> sesuai assessment dan keterbatasan biaya.</li>
+    <li><strong>Model ringan:</strong> Llama 3.2 3B berukuran sekitar 2 GB dan dapat berjalan pada CPU.</li>
+    <li><strong>Fallback tersedia:</strong> bila Ollama mati atau timeout, sistem tetap menghasilkan ringkasan berbasis aturan.</li>
+  </ul>
+  <h3>Alur generasi</h3>
+  <div class="flow-step"><b>1</b><div>Laravel mengambil metrik dan per-class metrics dari <code>TrainingRun</code>.</div></div>
+  <div class="flow-step"><b>2</b><div>Service menghitung kelas terlemah sendiri, bukan meminta LLM menebak.</div></div>
+  <div class="flow-step"><b>3</b><div>Prompt mengirim data terstruktur, tetapi melarang LLM menulis angka/persentase.</div></div>
+  <div class="flow-step"><b>4</b><div>Ollama harus mengembalikan JSON berisi <code>operational_risk</code> dan tepat tiga <code>recommendations</code>.</div></div>
+  <div class="flow-step"><b>5</b><div>Laravel memvalidasi JSON, fokus kelas terlemah, kata “confusion” dan “confidence”. Jika gagal, fallback rule-based dipakai.</div></div>
+  <div class="flow-step"><b>6</b><div>Angka kesimpulan dan per kelas disusun ulang langsung dari database, lalu Markdown disimpan.</div></div>
+  <pre>$response = Http::connectTimeout(5)->timeout(180)->post(
+    rtrim(config('services.ollama.url'), '/') . '/api/generate',
+    [
+        'model' => config('services.ollama.model'),
+        'stream' => false,
+        'prompt' => $this->prompt($run),
+        'format' => $this->responseSchema(),
+        'options' => ['temperature' => 0.2, 'num_predict' => 360],
+    ]
+);</pre>
+  <h3>Mengapa temperature 0,2?</h3>
+  <p>Temperature rendah membuat output lebih konsisten dan tidak terlalu kreatif. Untuk analisis metrik, konsistensi lebih penting daripada variasi bahasa.</p>
+  <h3>Bagaimana mencegah angka AI tidak sama dengan dashboard?</h3>
+  <p>LLM tidak diberi tanggung jawab mencetak angka. Metode <code>structuredSummary()</code> mengambil precision, recall, F1, mAP50, mAP50-95, dan per-class mAP langsung dari database. Karena dashboard membaca record yang sama, keduanya konsisten.</p>
+  <div class="success"><strong>Jawaban wawancara terbaik:</strong> “Saya tidak menjadikan LLM sebagai sumber kebenaran numerik. Database adalah source of truth. LLM hanya membantu menyusun risiko operasional dan rekomendasi, lalu jawabannya divalidasi dan memiliki fallback deterministik.”</div>
+  <h3>Konfigurasi lokal</h3>
+  <pre>OLLAMA_ENABLED=true
+OLLAMA_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.2:3b</pre>
+  <pre>ollama serve
+ollama pull llama3.2:3b
+php artisan config:clear</pre>
+  <figure class="figure"><img src="assets/summary-online.png" alt="AI Summary online"><figcaption>AI Summary online. Angka divalidasi dari database; narasi tercatat dibuat oleh Ollama llama3.2:3b secara lokal.</figcaption></figure>
+</section>
+
+<section class="chapter" id="database">
+  <div class="chapter-head"><span class="chapter-no">Bab 10</span><h2>Database dan hubungan data</h2></div>
+  <div class="diagram">
+    <div class="diagram-row">
+      <div class="node primary"><strong>training_runs</strong><span>1 eksperimen/model</span></div><div class="arrow">1 → N</div>
+      <div class="node"><strong>detections</strong><span>Riwayat inferensi</span></div>
+    </div>
+  </div>
+  <h3>Tabel <code>training_runs</code></h3>
+  <p>Menyimpan identitas model, konfigurasi training, status, timestamps, JSON metrik, metrik per kelas, confusion matrix, history per epoch, path artefak, AI summary, engine pembuat summary, dan catatan eksperimen.</p>
+  <h3>Tabel <code>detections</code></h3>
+  <p>Menyimpan file sumber, output annotated image, array deteksi, waktu inferensi, mode, status, dan pesan error. Foreign key ke training run bersifat nullable dan menggunakan <code>nullOnDelete()</code>, sehingga riwayat tidak menyebabkan kegagalan jika eksperimen dihapus.</p>
+  <h3>Mengapa kolom metrik memakai JSON?</h3>
+  <p>Jumlah dan bentuk metrik eksperimen dapat berkembang. JSON memudahkan menyimpan nested validation, dataset split, dan artefak tanpa menambah kolom untuk setiap variasi. Identitas dan field yang sering difilter tetap memakai kolom biasa.</p>
+  <h3>Seeder sebagai jembatan local → production</h3>
+  <p><code>DatabaseSeeder</code> mengisi satu record model final, membaca training history dari CSV, mencatat path artefak, serta menanam AI summary yang telah dibuat lokal. Di InfinityFree, seeder dijalankan melalui halaman installer karena tidak ada SSH.</p>
+  <div class="note"><strong>Idempotensi praktis:</strong> seeder mencari record melalui path checkpoint atau nama model lama, lalu memperbaruinya. Ini mencegah model final terus diduplikasi saat deployment diperbarui.</div>
+</section>
+
+<section class="chapter" id="ui">
+  <div class="chapter-head"><span class="chapter-no">Bab 11</span><h2>UI/UX dan halaman aplikasi</h2></div>
+  <figure class="figure"><img src="assets/dashboard-online.png" alt="Dashboard online"><figcaption>Dashboard production tervalidasi pada 15 Oktober 2026. Kartu utama memakai test independen dan kurva memakai validation per epoch.</figcaption></figure>
+  <table>
+    <thead><tr><th>Halaman</th><th>Tujuan pengguna</th><th>Data yang dipakai</th></tr></thead>
+    <tbody>
+      <tr><td>Dashboard</td><td>Melihat kesehatan model dengan cepat.</td><td>Latest TrainingRun, metrik utama, history, per-class.</td></tr>
+      <tr><td>Eksperimen</td><td>Melihat konfigurasi dan artefak training.</td><td>TrainingRun + gambar public/training.</td></tr>
+      <tr><td>Demo Deteksi</td><td>Mencoba gambar/video/kamera.</td><td>Streamlit online atau FastAPI lokal.</td></tr>
+      <tr><td>AI Summary</td><td>Membaca kesimpulan non-teknis dan rekomendasi.</td><td>Metrik database + hasil validasi Ollama/rules.</td></tr>
+    </tbody>
+  </table>
+  <h3>Keputusan desain</h3>
+  <ul>
+    <li>Sidebar menjaga navigasi konsisten dan menekankan empat kebutuhan assessment.</li>
+    <li>Kartu metrik memberi scan cepat; detail tetap tersedia di halaman eksperimen.</li>
+    <li>Warna hijau memberi identitas keselamatan/operasional tanpa visual terlalu ramai.</li>
+    <li>Layout responsif berubah menjadi satu kolom pada layar kecil.</li>
+    <li>Artefak evaluasi dapat dibuka ukuran penuh untuk pembuktian teknis.</li>
+    <li>Form admin disembunyikan pada production sehingga recruiter melihat hasil final tanpa risiko mengubah data.</li>
+  </ul>
+</section>
+
+<section class="chapter" id="deploy">
+  <div class="chapter-head"><span class="chapter-no">Bab 12</span><h2>Deployment online dan alasan pemisahannya</h2></div>
+  <h3>Laravel di InfinityFree</h3>
+  <p>InfinityFree menyediakan PHP, MySQL, SSL, subdomain, dan FTP gratis, tetapi tidak menyediakan SSH, Composer, atau NPM. Karena itu seluruh dependency dan asset dibangun lebih dahulu di komputer.</p>
+  <div class="flow-step"><b>1</b><div><code>build-package.ps1</code> menyalin source Laravel yang dibutuhkan.</div></div>
+  <div class="flow-step"><b>2</b><div><code>composer install --no-dev --optimize-autoloader</code> membuat vendor production.</div></div>
+  <div class="flow-step"><b>3</b><div><code>npm ci</code> dan <code>npm run build</code> membuat <code>public/build</code>; <code>node_modules</code> lalu dibuang.</div></div>
+  <div class="flow-step"><b>4</b><div>APP_KEY unik dibuat dan direktori writable disiapkan.</div></div>
+  <div class="flow-step"><b>5</b><div>Paket awal dan paket <code>update-safe</code> dibuat. Update-safe tidak membawa <code>.env</code>.</div></div>
+  <div class="flow-step"><b>6</b><div>Isi <code>htdocs</code> diunggah melalui FileZilla.</div></div>
+  <div class="flow-step"><b>7</b><div>Installer bertoken menjalankan migration + seeder; token lalu dikosongkan agar route kembali 404.</div></div>
+  <h3>Mengapa root <code>.htaccess</code> diperlukan?</h3>
+  <p>Document root InfinityFree adalah <code>htdocs</code>, sedangkan entry point Laravel berada di <code>public/index.php</code>. Root <code>.htaccess</code> menulis ulang request ke <code>public/</code>, melarang file tersembunyi seperti <code>.env</code>, dan menambahkan security headers.</p>
+  <h3>Streamlit Community Cloud</h3>
+  <p>Streamlit menarik repository GitHub, memasang <code>streamlit_app/requirements.txt</code> serta system package dari <code>packages.txt</code>, lalu menjalankan <code>streamlit_app/app.py</code>. Checkpoint dapat dibundel atau diunduh dari HTTPS dan selalu diverifikasi SHA-256.</p>
+  <h3>Kenapa aplikasi Streamlit kadang “waking up”?</h3>
+  <p>Paket gratis menidurkan aplikasi yang tidak aktif. Ketika dibuka lagi, container, dependency, dan model perlu dimuat. Cold start 1–3 menit bukan error model. Buka link Streamlit langsung, tunggu sampai “Model siap”, lalu kembali ke Laravel.</p>
+  <h3>Port dan endpoint</h3>
+  <table>
+    <thead><tr><th>Komponen</th><th>Lokal</th><th>Production</th></tr></thead>
+    <tbody>
+      <tr><td>Laravel</td><td><code>127.0.0.1:8000</code></td><td><code>https://ppe-vision.infinityfreeapp.com</code></td></tr>
+      <tr><td>FastAPI YOLO</td><td><code>127.0.0.1:8001</code></td><td>Tidak dipakai di InfinityFree</td></tr>
+      <tr><td>Streamlit</td><td><code>127.0.0.1:8501</code></td><td><code>*.streamlit.app</code></td></tr>
+      <tr><td>Ollama</td><td><code>127.0.0.1:11434</code></td><td>Tidak diekspos ke internet</td></tr>
+      <tr><td>MySQL</td><td>Opsional</td><td>Host InfinityFree, port 3306</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="chapter" id="security">
+  <div class="chapter-head"><span class="chapter-no">Bab 13</span><h2>Keamanan yang sudah diterapkan</h2></div>
+  <table>
+    <thead><tr><th>Risiko</th><th>Kontrol</th><th>Lokasi</th></tr></thead>
+    <tbody>
+      <tr><td>Kredensial bocor ke Git</td><td><code>.env</code> dan Streamlit secrets di-ignore; contoh memakai placeholder.</td><td><code>.gitignore</code></td></tr>
+      <tr><td>Update menimpa DB password</td><td>Paket <code>update-safe</code> menghapus <code>.env</code>.</td><td><code>build-package.ps1</code></td></tr>
+      <tr><td>Installer diakses publik</td><td>Token minimal panjang, <code>hash_equals</code>, throttle; route 404 bila token kosong.</td><td><code>InstallationController</code></td></tr>
+      <tr><td>Perubahan data oleh pengunjung</td><td><code>ALLOW_ADMIN_WRITES=false</code> menyembunyikan route/form tulis di production.</td><td><code>config/deployment.php</code></td></tr>
+      <tr><td>Upload berbahaya</td><td>MIME whitelist, batas ukuran, range confidence, decode gambar aman.</td><td>Laravel + FastAPI</td></tr>
+      <tr><td>Decompression bomb</td><td>Batas pixel PIL dan warning diperlakukan sebagai error.</td><td><code>inference_service/main.py</code></td></tr>
+      <tr><td>Model diganti/rusak</td><td>SHA-256 diverifikasi sebelum model dipakai.</td><td><code>streamlit_app/app.py</code></td></tr>
+      <tr><td>Cross-site request</td><td>Form Laravel memakai CSRF; endpoint sensitif diberi throttle.</td><td>Blade + routes</td></tr>
+      <tr><td>Embedding liar</td><td>CSP membatasi <code>frame-src</code> ke Streamlit dan <code>frame-ancestors</code> ke self.</td><td><code>htdocs.htaccess</code></td></tr>
+      <tr><td>XSS dari AI summary</td><td>Markdown dirender dengan HTML stripped dan unsafe links dinonaktifkan.</td><td><code>summary/show.blade.php</code></td></tr>
+    </tbody>
+  </table>
+  <div class="warning"><strong>Yang tidak boleh dilakukan:</strong> mengunggah `.env` lokal ke GitHub, mengirim token/password ke chat, membiarkan installer aktif, menaruh Ollama tanpa autentikasi di internet, atau menonaktifkan validasi upload.</div>
+</section>
+
+<section class="chapter" id="testing">
+  <div class="chapter-head"><span class="chapter-no">Bab 14</span><h2>Pengujian, validasi, dan audit</h2></div>
+  <div class="grid3">
+    <div class="metric"><strong>14</strong><span>feature tests lulus</span></div>
+    <div class="metric"><strong>75</strong><span>assertions lulus</span></div>
+    <div class="metric"><strong>0</strong><span>vulnerability Composer/NPM</span></div>
+  </div>
+  <h3>Apa yang diuji?</h3>
+  <ul>
+    <li>Dashboard menampilkan model dan metrik terbaru.</li>
+    <li>Nilai database sama persis dengan <code>model-info.json</code>.</li>
+    <li>Konfigurasi eksperimen dan impor metrik dapat disimpan saat mode admin aktif.</li>
+    <li>Fallback summary bekerja saat Ollama mati.</li>
+    <li>Output Ollama disimpan sebagai Markdown terstruktur.</li>
+    <li>Artefak evaluasi tampil di detail eksperimen.</li>
+    <li>Streamlit tertanam pada halaman deteksi.</li>
+    <li>Respons FastAPI dapat disimpan sebagai riwayat deteksi.</li>
+    <li>Installer 404 saat token kosong dan menolak token salah.</li>
+    <li>Production menyembunyikan operasi admin.</li>
+  </ul>
+  <h3>Validasi tambahan</h3>
+  <ul>
+    <li>Model SHA-256 sesuai metadata.</li>
+    <li>Composer audit tidak menemukan advisory.</li>
+    <li>NPM audit melaporkan 0 vulnerability.</li>
+    <li>Build Vite berhasil.</li>
+    <li>Dashboard, experiments, summary, detection, Streamlit, dan lock installer telah diperiksa online.</li>
+  </ul>
+  <div class="note"><strong>Batas makna test:</strong> test software membuktikan integrasi kode, bukan menjamin model sempurna pada seluruh kondisi dunia nyata. Kualitas model tetap harus diuji dengan data lapangan representatif.</div>
+</section>
+
+<section class="chapter" id="aktif">
+  <div class="chapter-head"><span class="chapter-no">Bab 15</span><h2>File aktif, pendukung, generated, dan opsional</h2></div>
+  <table>
+    <thead><tr><th>Kategori</th><th>Contoh</th><th>Tindakan</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Aktif production</strong></td><td><code>app/</code>, <code>config/</code>, <code>database/</code>, <code>resources/</code>, <code>routes/</code>, <code>public/</code>, <code>streamlit_app/</code>, <code>best.pt</code></td><td>Jangan hapus.</td></tr>
+      <tr><td><strong>Pendukung development</strong></td><td><code>inference_service/main.py</code>, <code>tests/</code>, README, data JSON/CSV</td><td>Pertahankan untuk demo lokal, audit, dan reproduksibilitas.</td></tr>
+      <tr><td><strong>Generated/ignored</strong></td><td><code>vendor/</code>, <code>node_modules/</code>, <code>public/build/</code>, <code>deploy/.../package</code>, <code>update-safe</code>, ZIP</td><td>Dapat dibuat ulang. Jangan commit; jangan hapus saat sedang dipakai untuk upload.</td></tr>
+      <tr><td><strong>Konfigurasi rahasia</strong></td><td><code>.env</code>, <code>.streamlit/secrets.toml</code></td><td>Jangan commit atau bagikan.</td></tr>
+      <tr><td><strong>Sudah dibersihkan</strong></td><td>Konfigurasi Render/Docker dan folder AlwaysData kosong</td><td>Dihapus karena bukan bagian deployment final. Dapat dibuat ulang jika arsitektur hosting berubah.</td></tr>
+    </tbody>
+  </table>
+  <div class="warning"><strong>Vendor bukan “sampah”.</strong> Folder vendor berisi dependency PHP. Salinannya di package/update-safe memang generated, tetapi diperlukan saat upload karena InfinityFree tidak menjalankan Composer.</div>
+</section>
+
+<section class="chapter" id="local">
+  <div class="chapter-head"><span class="chapter-no">Bab 16</span><h2>Menjalankan keseluruhan sistem secara lokal</h2></div>
+  <h3>A. Laravel</h3>
+  <pre>composer install
+Copy-Item .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm install
+npm run build
+php artisan serve</pre>
+  <p>Buka <code>http://127.0.0.1:8000</code>.</p>
+  <h3>B. Python environment</h3>
+  <pre>python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r inference_service\requirements.txt
+python -m pip install -r streamlit_app\requirements.txt</pre>
+  <h3>C. FastAPI lokal</h3>
+  <pre>.\.venv\Scripts\python.exe -m uvicorn inference_service.main:app --host 127.0.0.1 --port 8001</pre>
+  <p>Isi <code>YOLO_API_URL=http://127.0.0.1:8001</code>. Cek <code>http://127.0.0.1:8001/health</code>.</p>
+  <h3>D. Streamlit lokal</h3>
+  <pre>.\.venv\Scripts\python.exe -m streamlit run streamlit_app\app.py</pre>
+  <p>Isi <code>STREAMLIT_DEMO_URL=http://127.0.0.1:8501</code>.</p>
+  <h3>E. Ollama lokal</h3>
+  <pre>ollama serve
+ollama pull llama3.2:3b</pre>
+  <p>Aktifkan tiga variabel Ollama di `.env`, lalu jalankan:</p>
+  <pre>php artisan config:clear</pre>
+  <h3>Urutan start yang mudah diingat</h3>
+  <ol>
+    <li>Ollama (jika ingin regenerate summary).</li>
+    <li>FastAPI atau Streamlit (pilih kebutuhan demo).</li>
+    <li>Laravel.</li>
+    <li>Buka browser dan uji health/status.</li>
+  </ol>
+</section>
+
+<section class="chapter" id="troubleshoot">
+  <div class="chapter-head"><span class="chapter-no">Bab 17</span><h2>Troubleshooting cepat</h2></div>
+  <table>
+    <thead><tr><th>Gejala</th><th>Penyebab umum</th><th>Solusi</th></tr></thead>
+    <tbody>
+      <tr><td>HTTP 500 Laravel</td><td>DB salah, storage/cache tidak writable, dependency kurang.</td><td>Periksa `.env`, log, struktur upload, dan permission.</td></tr>
+      <tr><td>404 pada semua route</td><td><code>.htaccess</code> root/public tidak terunggah.</td><td>Upload file bertitik dan refresh FTP listing.</td></tr>
+      <tr><td>404 pada <code>/install</code></td><td>Token kosong.</td><td>Normal setelah instalasi; ini kondisi aman.</td></tr>
+      <tr><td>429 Too Many Requests</td><td>Tombol/reload terlalu sering.</td><td>Tunggu 1–2 menit; route diberi throttle.</td></tr>
+      <tr><td>Streamlit “waking up”</td><td>Cold start free tier.</td><td>Buka link langsung, tunggu 1–3 menit, lalu refresh Laravel sekali.</td></tr>
+      <tr><td>Model tidak dimuat</td><td><code>best.pt</code> tidak ada atau checksum salah.</td><td>Pastikan file/path/URL HTTPS dan SHA-256 benar.</td></tr>
+      <tr><td>Tidak semua 3 kelas tampil</td><td>Objek tidak ada atau confidence terlalu tinggi.</td><td>Uji input representatif dan threshold 0,20; jangan menganggap kelas model hilang.</td></tr>
+      <tr><td>Ollama lambat</td><td>Cold load model 2 GB dan CPU inference.</td><td>Tunggu request pertama; timeout aplikasi sudah 180 detik.</td></tr>
+      <tr><td>Summary fallback rule-based</td><td>Ollama mati, timeout, atau JSON tidak valid.</td><td>Periksa <code>ollama list</code>, <code>ollama serve</code>, URL, dan log Laravel.</td></tr>
+      <tr><td>Video tidak dapat diputar</td><td>FFmpeg tidak tersedia.</td><td>Pastikan <code>packages.txt</code> memuat <code>ffmpeg</code>.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="chapter" id="presentasi">
+  <div class="chapter-head"><span class="chapter-no">Bab 18</span><h2>Naskah presentasi 5–7 menit</h2></div>
+  <div class="qa"><strong>1. Masalah (30 detik)</strong>PPE Vision membantu mengevaluasi dan mendemokan object detection untuk tiga kelas keselamatan: Helm, Masker, dan People. Targetnya bukan hanya model, tetapi juga sistem yang dapat dipahami dan diakses online.</div>
+  <div class="qa"><strong>2. Model dan data (60 detik)</strong>Saya menggunakan checkpoint YOLO26s final. Data dibagi menjadi 3.025 train, 603 validation, dan 212 test independen. Lima random-search trial digunakan untuk memilih hyperparameter, kemudian konfigurasi terbaik dilatih 60 epoch.</div>
+  <div class="qa"><strong>3. Hasil (60 detik)</strong>Pada test independen, precision 95,5%, recall 90,7%, F1 93,0%, mAP50 95,7%, dan mAP50-95 69,3%. Kelas terlemah adalah Masker dengan mAP50-95 63,4%, sehingga perbaikan berikutnya fokus pada anotasi dan variasi masker.</div>
+  <div class="qa"><strong>4. Arsitektur (75 detik)</strong>Laravel 12 menjadi portal utama dan MySQL menyimpan eksperimen. Streamlit menjalankan Python/YOLO di cloud karena InfinityFree hanya mendukung PHP. Demo Streamlit ditanam ke Laravel melalui iframe. Untuk pengembangan lokal tersedia FastAPI.</div>
+  <div class="qa"><strong>5. AI Summary (60 detik)</strong>Ollama llama3.2:3b berjalan lokal. Untuk mencegah halusinasi, LLM tidak mencetak angka; angka selalu diambil dari database. LLM hanya memberi risiko dan tiga rekomendasi dalam JSON schema, kemudian Laravel memvalidasi dan menyediakan fallback rule-based.</div>
+  <div class="qa"><strong>6. Keamanan dan deploy (60 detik)</strong>Secret tidak masuk Git, installer bertoken dikunci setelah dipakai, operasi admin dimatikan di production, upload divalidasi, model diverifikasi SHA-256, dan update-safe tidak membawa `.env`.</div>
+  <div class="qa"><strong>7. Penutup (30 detik)</strong>Seluruh syarat inti dan point plus terpenuhi. Pengembangan selanjutnya adalah memperbaiki dataset kelas Masker, menambah data lapangan, menguji threshold, dan mengukur performa pada perangkat target.</div>
+</section>
+
+<section class="chapter" id="qa">
+  <div class="chapter-head"><span class="chapter-no">Bab 19</span><h2>Pertanyaan wawancara yang mungkin muncul</h2></div>
+  <div class="qa"><strong>Q: Mengapa memakai Laravel dan Streamlit sekaligus?</strong>Laravel mengelola UI utama, route, database, validasi, keamanan, dan riwayat eksperimen. Streamlit menjalankan runtime Python/PyTorch yang tidak tersedia di InfinityFree. Pengguna tetap melihat satu portal karena Streamlit di-embed.</div>
+  <div class="qa"><strong>Q: Mengapa tidak semuanya dibuat dengan Streamlit?</strong>Syarat point plus meminta Laravel UI/UX. Selain itu Laravel lebih terstruktur untuk CRUD, database, middleware, CSRF, migration, dan halaman laporan.</div>
+  <div class="qa"><strong>Q: Mengapa Ollama tidak berjalan langsung di hosting?</strong>Ollama memerlukan proses runtime dan resource model sekitar 2 GB. InfinityFree tidak mendukung proses tersebut. Assessment meminta AI lokal, sehingga Ollama dijalankan lokal dan hasilnya disimpan untuk ditampilkan online.</div>
+  <div class="qa"><strong>Q: Bagaimana memastikan AI Summary tidak mengarang angka?</strong>LLM dilarang menulis angka. Laravel menghitung dan mencetak angka dari database. Respons LLM memakai JSON schema, divalidasi, dan memiliki fallback deterministik.</div>
+  <div class="qa"><strong>Q: Mengapa memakai Llama 3.2 3B?</strong>Lebih ringan daripada model besar, cukup untuk merangkum metrik dalam Bahasa Indonesia, berjalan lokal tanpa API key, dan latency masih masuk akal pada CPU.</div>
+  <div class="qa"><strong>Q: Apa perbedaan validation dan test?</strong>Validation dipantau selama training untuk memilih model. Test independen dipakai setelah keputusan model selesai agar estimasi generalisasi lebih jujur.</div>
+  <div class="qa"><strong>Q: Mengapa mAP50-95 dipakai sebagai metrik utama?</strong>Ia menilai kualitas deteksi pada berbagai IoU, sehingga lebih ketat dan representatif daripada hanya mAP50.</div>
+  <div class="qa"><strong>Q: Mengapa Masker paling lemah?</strong>Masker berukuran kecil, variasinya besar, mudah tertutup/menyatu dengan wajah, dan kualitas anotasi semuka dapat membuat bounding box tidak konsisten.</div>
+  <div class="qa"><strong>Q: Apakah model bisa mendeteksi tiga kelas sekaligus?</strong>Bisa, jika ketiganya ada, terlihat cukup jelas, dan melewati threshold. Model memiliki tiga class head; keluaran per gambar tetap tergantung konten.</div>
+  <div class="qa"><strong>Q: Mengapa confidence default 0,20?</strong>Untuk mengurangi objek PPE kecil yang terlewat. Nilai ini trade-off dan harus diuji lagi pada kondisi deployment sebenarnya.</div>
+  <div class="qa"><strong>Q: Apa fungsi FastAPI bila sudah ada Streamlit?</strong>FastAPI adalah jalur integrasi lokal Laravel → Python yang menyimpan riwayat deteksi ke DB. Streamlit adalah demo mandiri untuk hosting online dan video/kamera.</div>
+  <div class="qa"><strong>Q: Bagaimana model dijaga integritasnya?</strong>Metadata menyimpan SHA-256. Streamlit menghitung checksum sebelum memuat model; file yang tidak cocok ditolak.</div>
+  <div class="qa"><strong>Q: Bagaimana upload diamankan?</strong>MIME/ekstensi dibatasi, ukuran dibatasi, image didecode, pixel maksimum ditetapkan, dan threshold divalidasi.</div>
+  <div class="qa"><strong>Q: Mengapa installer lewat web?</strong>InfinityFree gratis tidak memberi SSH. Installer bertoken menjadi jembatan menjalankan migration dan seeder; setelah selesai token dikosongkan sehingga route 404.</div>
+  <div class="qa"><strong>Q: Bagaimana update tanpa merusak konfigurasi?</strong>Upload isi <code>update-safe/htdocs</code>; paket ini sengaja tidak memiliki `.env`, sehingga APP_KEY dan kredensial MySQL server tidak tertimpa.</div>
+  <div class="qa"><strong>Q: Mengapa Streamlit lambat saat pertama dibuka?</strong>Free tier menidurkan aplikasi. Container perlu bangun dan model perlu dimuat. Request berikutnya lebih cepat karena resource cache.</div>
+  <div class="qa"><strong>Q: Apa kekurangan sistem saat ini?</strong>Masker masih kelas terlemah, demo gratis memiliki cold start, inferensi video memakai CPU, belum ada tracking identitas unik antar-frame, dan evaluasi lapangan perlu diperluas.</div>
+  <div class="qa"><strong>Q: Apa pengembangan selanjutnya?</strong>Audit anotasi Masker, tambah hard examples, lakukan class balancing/augmentation terkontrol, threshold calibration, tracking video, monitoring latency, dan uji pada data lokasi target.</div>
+  <div class="qa"><strong>Q: Apakah angka dashboard dan summary benar-benar sama?</strong>Ya. Feature test membandingkan seed database terhadap <code>model-info.json</code> hingga toleransi 1e-9 dan menguji angka yang dirender di dashboard.</div>
+  <div class="qa"><strong>Q: Apa yang terjadi bila Ollama gagal?</strong>Exception dicatat, kemudian sistem memakai summary lokal berbasis aturan. Halaman tetap berfungsi dan engine ditandai bukan LLM.</div>
+</section>
+
+<section class="chapter" id="glosarium">
+  <div class="chapter-head"><span class="chapter-no">Bab 20</span><h2>Glosarium, checklist, dan link final</h2></div>
+  <h3>Glosarium singkat</h3>
+  <table>
+    <tbody>
+      <tr><th>Bounding box</th><td>Kotak koordinat yang mengelilingi objek.</td><th>Checkpoint</th><td>File bobot model hasil training, yaitu <code>best.pt</code>.</td></tr>
+      <tr><th>Inference</th><td>Proses memakai model untuk memprediksi input baru.</td><th>Epoch</th><td>Satu putaran model melihat seluruh data train.</td></tr>
+      <tr><th>False positive</th><td>Model mendeteksi objek yang sebenarnya tidak ada/salah.</td><th>False negative</th><td>Objek ada tetapi tidak terdeteksi.</td></tr>
+      <tr><th>Cold start</th><td>Waktu menyalakan kembali layanan/model setelah tidur.</td><th>Seeder</th><td>Kode untuk mengisi data awal/final ke database.</td></tr>
+      <tr><th>Migration</th><td>Versi struktur tabel database.</td><th>Iframe</th><td>Menampilkan halaman layanan lain di dalam halaman Laravel.</td></tr>
+    </tbody>
+  </table>
+  <h3>Checklist sebelum presentasi</h3>
+  <ul>
+    <li><span class="check">✓</span> Buka dashboard dan tunjukkan test independen.</li>
+    <li><span class="check">✓</span> Buka detail eksperimen dan artefak asli.</li>
+    <li><span class="check">✓</span> Bangunkan Streamlit 3 menit sebelum presentasi.</li>
+    <li><span class="check">✓</span> Siapkan satu gambar yang memuat orang, helm, dan masker.</li>
+    <li><span class="check">✓</span> Buka AI Summary dan jelaskan kontrol halusinasi.</li>
+    <li><span class="check">✓</span> Jangan menampilkan `.env`, password FTP/MySQL, atau token.</li>
+    <li><span class="check">✓</span> Ingat limitation dan rencana perbaikan Masker.</li>
+  </ul>
+  <h3>Link final</h3>
+  <table>
+    <tbody>
+      <tr><th>Portal utama</th><td><a href="https://ppe-vision.infinityfreeapp.com/">https://ppe-vision.infinityfreeapp.com/</a></td></tr>
+      <tr><th>Eksperimen</th><td><a href="https://ppe-vision.infinityfreeapp.com/experiments">https://ppe-vision.infinityfreeapp.com/experiments</a></td></tr>
+      <tr><th>AI Summary</th><td><a href="https://ppe-vision.infinityfreeapp.com/experiments/1/summary">https://ppe-vision.infinityfreeapp.com/experiments/1/summary</a></td></tr>
+      <tr><th>Demo dalam Laravel</th><td><a href="https://ppe-vision.infinityfreeapp.com/detection">https://ppe-vision.infinityfreeapp.com/detection</a></td></tr>
+      <tr><th>Streamlit langsung</th><td><a href="https://ppe-vision-lculpeehh7bzalqxpwtbf5.streamlit.app/">https://ppe-vision-lculpeehh7bzalqxpwtbf5.streamlit.app/</a></td></tr>
+      <tr><th>GitHub</th><td><a href="https://github.com/silviadela/ppe-vision">https://github.com/silviadela/ppe-vision</a></td></tr>
+    </tbody>
+  </table>
+  <div class="success"><strong>Satu link yang diberikan kepada recruiter:</strong> <a href="https://ppe-vision.infinityfreeapp.com/">https://ppe-vision.infinityfreeapp.com/</a>. Link lain adalah bukti tambahan bila diminta.</div>
+  <p class="footer-note">Laporan dibuat dari audit source code lokal dan deployment aktif pada 15 Oktober 2026. Tidak ada password, token, APP_KEY, atau kredensial database yang disertakan.</p>
+</section>
+
+</body>
+</html>

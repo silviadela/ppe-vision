@@ -18,7 +18,7 @@ Route::post('/install', [InstallationController::class, 'store'])
 
 Route::resource('experiments', TrainingRunController::class)
     ->parameters(['experiments' => 'trainingRun'])
-    ->only(['index', 'create', 'store', 'show']);
+    ->only(['index', 'show']);
 Route::post('/experiments/{trainingRun}/metrics', [TrainingRunController::class, 'importMetrics'])
     ->middleware('throttle:5,1')
     ->name('experiments.metrics');

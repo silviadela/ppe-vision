@@ -68,7 +68,12 @@ class DetectionController extends Controller
         } catch (Throwable $exception) {
             $detection->update(['status' => 'failed', 'error_message' => $exception->getMessage()]);
 
-            return back()->with('error', $exception->getMessage());
+            return back()->with(
+                'error',
+                app()->isProduction()
+                    ? 'Deteksi gagal diproses. Silakan coba kembali.'
+                    : $exception->getMessage(),
+            );
         }
     }
 }
