@@ -81,6 +81,11 @@ textarea { min-height:105px; resize:vertical; }
 .alert-success { color:#246444; background:#e5f5eb; border-color:#c8e9d4; }
 .alert-error { color:#943e37; background:#fbecea; border-color:#f2d0cc; }
 .summary { padding:22px; border-left:4px solid var(--green2); background:#f1f8f4; border-radius:4px 14px 14px 4px; font-size:15px; line-height:1.75; }
+.summary h3 { margin:20px 0 6px; color:var(--green); font-size:14px; letter-spacing:.01em; }
+.summary h3:first-child { margin-top:0; }
+.summary p { margin:0; }
+.summary ol,.summary ul { margin:5px 0 0; padding-left:22px; }
+.summary li { margin:5px 0; padding-left:3px; }
 .summary-meta { margin-top:12px; color:var(--muted); font-size:11px; }
 .upload { padding:38px; border:1.5px dashed #b9cbc1; border-radius:14px; background:#fbfdfb; text-align:center; }
 .upload-icon { width:52px; height:52px; margin:0 auto 12px; display:grid; place-items:center; border-radius:16px; background:var(--mint); color:var(--green); font-size:22px; }

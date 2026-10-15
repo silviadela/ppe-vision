@@ -10,7 +10,7 @@
 @endforeach
 </div>
 <div class="grid dashboard-grid">
-<section class="card"><div class="card-title"><div><h2>Training curve</h2><p>Perkembangan metric selama epoch</p></div><span class="pill pill-success">{{ $latestRun->status }}</span></div>
+<section class="card"><div class="card-title"><div><h2>Training curve</h2><p>Hasil validasi per epoch; kartu utama memakai test independen</p></div><span class="pill pill-success">{{ $latestRun->status }}</span></div>
 @php($history = $latestRun->training_history ?? [])
 @if(count($history))
 <svg class="chart" viewBox="0 0 700 220" preserveAspectRatio="none">
@@ -22,9 +22,9 @@
 <text class="chart-label" x="35" y="212">Epoch awal</text><text class="chart-label" x="630" y="212">Epoch {{ $latestRun->epochs }}</text></svg>
 <div class="legend"><span><i style="background:#1f6b4f"></i>mAP50-95</span><span><i style="background:#e9a23b"></i>Precision</span><span><i style="background:#7294a6"></i>Recall</span></div>
 @else<div class="empty">Training history belum diimpor.</div>@endif</section>
-<section class="card"><div class="card-title"><div><h2>Performa per kelas</h2><p>mAP50 untuk tiap kategori dari Precision–Recall Curve</p></div></div><div class="classes">
+<section class="card"><div class="card-title"><div><h2>Performa per kelas</h2><p>mAP50-95 pada test independen</p></div></div><div class="classes">
 @forelse($latestRun->per_class_metrics ?? [] as $class=>$metric)
-@php($classMap = $metric['map50'] ?? $metric['map50_95'] ?? null)
+@php($classMap = $metric['map50_95'] ?? null)
 <div class="class-row"><strong>{{ $class }}</strong><div class="bar"><span style="width:{{ ($classMap ?? 0)*100 }}%"></span></div><span>{{ $classMap !== null ? number_format($classMap*100,1).'%' : '—' }}</span></div>@empty<div class="empty">Metrics per kelas belum ada.</div>@endforelse
 </div><a href="{{ route('summary.show', $latestRun) }}" class="btn btn-secondary" style="width:100%;margin-top:25px">Lihat analisis AI</a></section></div>
 @else<section class="card empty"><h2>Belum ada eksperimen</h2><p>Data eksperimen belum tersedia.</p>@if(config('deployment.allow_admin_writes'))<a class="btn btn-primary" href="{{ route('experiments.create') }}">Buat eksperimen</a>@endif</section>@endif

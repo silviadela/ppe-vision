@@ -62,8 +62,19 @@ class DatabaseSeeder extends Seeder
                 'people' => ['source_class' => 'Person', 'precision' => .9724798032, 'recall' => .9508196721, 'f1' => .9615277694, 'map50' => .9772817565, 'map50_95' => .7544731253],
             ],
             'training_history' => $this->readTrainingHistory(),
-            'ai_summary' => 'Model final YOLO26s mencapai precision 95,5%, recall 90,7%, F1 93,0%, mAP50 95,7%, dan mAP50-95 69,3% pada 212 gambar test independen. Person menjadi kelas terkuat dengan mAP50-95 75,4%, diikuti Helmet 69,1%; Mask merupakan kelas terlemah dengan mAP50-95 63,4% dan recall 87,5%. Model layak untuk demo, tetapi evaluasi lapangan harus memberi perhatian khusus pada masker kecil, wajah tertutup sebagian, cahaya rendah, dan sudut kamera yang berbeda. Mulai confidence pada 0,20 lalu sesuaikan berdasarkan false positive dan false negative video nyata.',
-            'summary_generated_by' => 'OpenAI Codex (AI-assisted baseline)',
+            'ai_summary' => "### Kesimpulan\n"
+                ."Model YOLO26s pada test independen (212 gambar) mencapai precision 95,5%, recall 90,7%, F1 93,0%, mAP50 95,7%, dan mAP50-95 69,3%.\n\n"
+                ."### mAP50-95 per kelas\n"
+                ."- Helm: 69,1%\n- Masker: 63,4%\n- People: 75,4%\n\n"
+                ."### Kelas yang perlu perhatian\n"
+                ."Masker merupakan kelas terlemah secara relatif berdasarkan mAP50-95 63,4%.\n\n"
+                ."### Risiko operasional\n"
+                ."Kondisi lapangan yang tidak stabil dapat memengaruhi performa model, terutama pada kelas Masker dengan risiko false negative yang lebih tinggi.\n\n"
+                ."### Rekomendasi\n"
+                ."1. Tambah variasi data kelas Masker, terutama objek kecil, sudut berbeda, dan kondisi cahaya rendah.\n"
+                ."2. Analisis false negative dan confusion matrix untuk memahami kesalahan pada kelas Masker.\n"
+                ."3. Uji confidence threshold pada video lapangan untuk menyeimbangkan false positive dan false negative.",
+            'summary_generated_by' => 'Ollama · llama3.2:3b (dibuat secara lokal)',
             'model_artifact_path' => 'inference_service/models/best.pt',
             'results_plot_path' => 'training/ppe-yolo26s-dataset4-final/results.png',
             'confusion_matrix_path' => 'training/ppe-yolo26s-dataset4-final/confusion_matrix.png',
