@@ -23,6 +23,7 @@ yarn-error.log
 /deploy/infinityfree/package/
 /deploy/infinityfree/ppe-vision-infinityfree.zip
 /deploy/infinityfree/update-safe/
+/docs/
 /auth.json
 /.fleet
 /.idea
