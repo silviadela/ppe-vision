@@ -100,9 +100,11 @@ Seluruh isi paket diunggah ke `htdocs`. `.htaccess` root mengarahkan request ke 
 
 Setelah layanan inferensi aktif, simpan URL `https://...streamlit.app` pada `STREAMLIT_DEMO_URL` di `.env` InfinityFree. Dashboard otomatis menambahkan mode embed dan menampilkannya di menu **Demo Deteksi**. Link yang dibagikan kepada penguji cukup URL Laravel dari InfinityFree.
 
-## Ringkasan dengan Ollama (opsional)
+## Ringkasan lokal dengan Ollama
 
-Secara default aplikasi memakai analisis lokal berbasis aturan. Untuk memakai Ollama:
+Implementasi final menggunakan Ollama lokal untuk menyusun risiko operasional dan tiga rekomendasi dari metrik model. Laravel tetap menghitung serta menampilkan seluruh angka dari database agar LLM tidak menjadi sumber nilai evaluasi. Jika Ollama tidak aktif, tidak dapat dihubungi, atau responsnya tidak lolos validasi, aplikasi memberi label yang jujur dan memakai fallback berbasis aturan.
+
+Konfigurasi lokal:
 
 ```env
 OLLAMA_ENABLED=true
@@ -111,5 +113,7 @@ OLLAMA_MODEL=llama3.2:3b
 ```
 
 Setelah mengubah `.env`, jalankan `php artisan config:clear`.
+
+Karena InfinityFree tidak dapat mengakses Ollama pada komputer pengguna, ringkasan yang sudah dibuat secara lokal disimpan di database dan ditampilkan secara read-only pada hosting online. Untuk membuktikan proses generasi, jalankan Laravel dan Ollama secara lokal lalu gunakan aksi pembuatan ulang summary dalam mode development.
 
 > Metrics pada seeder berasal dari model final YOLO26s yang aktif dan evaluasi test independen di dalam paket Dataset 4.

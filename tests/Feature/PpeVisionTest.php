@@ -269,6 +269,34 @@ class PpeVisionTest extends TestCase
         Storage::disk('public')->assertExists($detection->output_path);
     }
 
+    public function test_production_detection_failure_does_not_expose_internal_error(): void
+    {
+        Storage::fake('public');
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+        $this->app->detectEnvironment(fn () => 'production');
+        config(['services.yolo.url' => 'http://yolo.test']);
+        Http::fake([
+            'http://yolo.test/health' => Http::response(['status' => 'ready']),
+            'http://yolo.test/predict' => Http::response([
+                'message' => 'Internal path C:\\private\\model.pt is unavailable.',
+            ], 500),
+        ]);
+
+        $this->post(route('detection.store'), [
+            'file' => UploadedFile::fake()->createWithContent(
+                'worker.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')
+            ),
+            'confidence' => .35,
+        ])->assertRedirect()
+            ->assertSessionHas('error', 'Deteksi gagal diproses. Silakan coba kembali.');
+
+        $detection = Detection::firstOrFail();
+        $this->assertSame('failed', $detection->status);
+        $this->assertSame('Deteksi gagal diproses. Silakan coba kembali.', $detection->error_message);
+        $this->assertStringNotContainsString('private', $detection->error_message);
+    }
+
     public function test_web_installer_is_hidden_without_a_token(): void
     {
         config(['deployment.infinityfree_install_token' => null]);

@@ -58,12 +58,35 @@ Get-ChildItem -LiteralPath (Join-Path $HtdocsRoot 'storage\logs') -Force -ErrorA
 Copy-Item -LiteralPath (Join-Path $ProjectRoot '.env.infinityfree.example') -Destination (Join-Path $HtdocsRoot '.env') -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'htdocs.htaccess') -Destination (Join-Path $HtdocsRoot '.htaccess') -Force
 
-Push-Location $HtdocsRoot
+$TempBase = [IO.Path]::GetTempPath().TrimEnd('\')
+$ComposerTempRoot = Join-Path $TempBase ('ppe-vision-composer-' + [Guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $ComposerTempRoot -Force | Out-Null
+$ResolvedComposerTempRoot = (Resolve-Path $ComposerTempRoot).Path
+if (-not $ResolvedComposerTempRoot.StartsWith($TempBase + '\', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Folder sementara Composer berada di luar direktori temporary Windows.'
+}
+$ComposerTempHtdocsRoot = Join-Path $ComposerTempRoot 'htdocs'
+Copy-Item -LiteralPath $HtdocsRoot -Destination $ComposerTempRoot -Recurse -Force
+
+Push-Location $ComposerTempHtdocsRoot
 try {
     Write-Host '[2/6] Memasang dependency PHP production...'
     & composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
     if ($LASTEXITCODE -ne 0) { throw 'Composer gagal memasang dependency.' }
 
+    Copy-Item -LiteralPath (Join-Path $ComposerTempHtdocsRoot 'vendor') -Destination $HtdocsRoot -Recurse -Force
+    Get-ChildItem -LiteralPath (Join-Path $ComposerTempHtdocsRoot 'bootstrap\cache') -File -Force |
+        ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $HtdocsRoot 'bootstrap\cache') -Force }
+}
+finally {
+    Pop-Location
+    if (Test-Path -LiteralPath $ResolvedComposerTempRoot) {
+        Remove-Item -LiteralPath $ResolvedComposerTempRoot -Recurse -Force
+    }
+}
+
+Push-Location $HtdocsRoot
+try {
     Write-Host '[3/6] Membangun asset Vite...'
     & npm ci --no-audit --no-fund
     if ($LASTEXITCODE -ne 0) { throw 'npm ci gagal.' }
