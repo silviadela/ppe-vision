@@ -37,6 +37,21 @@ class BrowserSummarySyncTest extends TestCase
             ->assertSee('summary:prepare-browser');
     }
 
+    public function test_online_summary_page_links_to_the_browser_exchange(): void
+    {
+        config(['deployment.allow_admin_writes' => false]);
+        $run = $this->completedRun();
+        $run->update([
+            'ai_summary' => '### Kesimpulan AI'."\nRingkasan tersimpan.",
+            'summary_generated_by' => 'Ollama · llama3.2:3b',
+        ]);
+
+        $this->get(route('summary.show', $run))
+            ->assertOk()
+            ->assertSee('Perbarui analisis AI')
+            ->assertSee(route('summary.exchange', $run), false);
+    }
+
     public function test_metrics_download_requires_the_private_token(): void
     {
         $run = $this->completedRun();
