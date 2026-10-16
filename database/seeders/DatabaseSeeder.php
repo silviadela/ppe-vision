@@ -73,7 +73,7 @@ class DatabaseSeeder extends Seeder
                 ."### Rekomendasi\n"
                 ."1. Tambah variasi data kelas Masker, terutama objek kecil, sudut berbeda, dan kondisi cahaya rendah.\n"
                 ."2. Analisis false negative dan confusion matrix untuk memahami kesalahan pada kelas Masker.\n"
-                ."3. Uji confidence threshold pada video lapangan untuk menyeimbangkan false positive dan false negative.",
+                .'3. Uji confidence threshold pada video lapangan untuk menyeimbangkan false positive dan false negative.',
             'summary_generated_by' => 'Ollama · llama3.2:3b (dibuat secara lokal)',
             'model_artifact_path' => 'inference_service/models/best.pt',
             'results_plot_path' => 'training/ppe-yolo26s-dataset4-final/results.png',

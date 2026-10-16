@@ -86,8 +86,7 @@ Repository menyediakan:
 
 - `.env.infinityfree.example` untuk konfigurasi production;
 - `deploy/infinityfree/build-package.ps1` untuk membuat paket siap-upload;
-- halaman instalasi database satu kali di `/install`;
-- [`INFINITYFREE_DEPLOY.md`](INFINITYFREE_DEPLOY.md) untuk panduan lengkap.
+- halaman instalasi database satu kali di `/install`.
 
 Seluruh isi paket diunggah ke `htdocs`. `.htaccess` root mengarahkan request ke folder Laravel `public`, sedangkan kredensial MySQL hanya disimpan dalam `.env` server.
 
@@ -114,7 +113,7 @@ OLLAMA_MODEL=llama3.2:3b
 
 Setelah mengubah `.env`, jalankan `php artisan config:clear`.
 
-Karena InfinityFree tidak dapat mengakses Ollama pada komputer pengguna, proses AI dijalankan oleh Laravel lokal. Hasil yang lolos validasi dapat dikirim melalui API bertoken ke MySQL InfinityFree dan kemudian ditampilkan secara read-only pada dashboard online.
+Karena InfinityFree tidak dapat mengakses Ollama pada komputer pengguna, proses AI dijalankan oleh Laravel lokal. Hasil yang lolos validasi dipindahkan melalui halaman browser bertoken ke MySQL InfinityFree dan kemudian ditampilkan secara read-only pada dashboard online.
 
 ### Sinkronisasi Ollama lokal ke database online
 
@@ -132,7 +131,7 @@ Pada `.env` InfinityFree:
 SUMMARY_SYNC_TOKEN=TOKEN_ACAK_YANG_SAMA
 ```
 
-#### InfinityFree gratis: sinkronisasi melalui browser
+#### Sinkronisasi melalui browser
 
 InfinityFree gratis menampilkan browser security challenge pada request programatik. Karena itu, perintah API otomatis tidak dapat menerima JSON dari domain tersebut. Gunakan alur browser-assisted berikut:
 
@@ -149,14 +148,6 @@ php artisan summary:prepare-browser "C:\Users\NAMA\Downloads\ppe-metrics-run-1.j
 
 File JSON hanya menjadi media transfer sementara dan bukan database. Metrics tetap berasal dari MySQL online, sedangkan teks analisis hanya dibuat oleh Ollama lokal.
 
-#### Hosting yang mendukung API
-
-Untuk hosting tanpa browser security challenge, alur API otomatis tetap tersedia. Isi juga `SUMMARY_SYNC_URL`, lalu jalankan:
-
-```bash
-php artisan summary:sync-online 1
-```
-
-API dan alur browser sama-sama menolak token yang salah, label mesin selain model Ollama yang dikonfigurasi, dan summary yang dibuat dari metrics lama. Token tidak boleh dimasukkan ke repository.
+Alur browser menolak token yang salah, label mesin selain model Ollama yang dikonfigurasi, file yang diubah, dan summary yang dibuat dari metrics lama. Token tidak boleh dimasukkan ke repository.
 
 > Metrics pada seeder berasal dari model final YOLO26s yang aktif dan evaluasi test independen di dalam paket Dataset 4.

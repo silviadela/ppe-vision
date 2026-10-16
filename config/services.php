@@ -50,7 +50,6 @@ return [
     ],
 
     'summary_sync' => [
-        'url' => env('SUMMARY_SYNC_URL'),
         'token' => env('SUMMARY_SYNC_TOKEN'),
     ],
 
