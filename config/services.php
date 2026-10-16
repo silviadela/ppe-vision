@@ -49,4 +49,9 @@ return [
         'model' => env('OLLAMA_MODEL', 'llama3.2:3b'),
     ],
 
+    'summary_sync' => [
+        'url' => env('SUMMARY_SYNC_URL'),
+        'token' => env('SUMMARY_SYNC_TOKEN'),
+    ],
+
 ];

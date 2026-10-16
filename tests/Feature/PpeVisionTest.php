@@ -271,6 +271,120 @@ class PpeVisionTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_online_summary_api_requires_its_private_token(): void
+    {
+        config(['services.summary_sync.token' => 'private-sync-token']);
+        $run = $this->completedRun();
+
+        $this->getJson('/api/local-ai/training-runs/'.$run->id)
+            ->assertUnauthorized();
+    }
+
+    public function test_online_summary_api_reads_metrics_and_updates_the_same_record(): void
+    {
+        config([
+            'services.summary_sync.token' => 'private-sync-token',
+            'services.ollama.model' => 'llama3.2:3b',
+        ]);
+        $run = $this->completedRun();
+
+        $source = $this->withToken('private-sync-token')
+            ->getJson('/api/local-ai/training-runs/'.$run->id)
+            ->assertOk()
+            ->assertJsonPath('run.model_version', $run->model_version)
+            ->json();
+
+        $this->withToken('private-sync-token')
+            ->putJson('/api/local-ai/training-runs/'.$run->id.'/summary', [
+                'ai_summary' => '### Kesimpulan AI'."\n".'Ringkasan dari Ollama lokal.',
+                'summary_generated_by' => 'Ollama · llama3.2:3b',
+                'metrics_fingerprint' => $source['metrics_fingerprint'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Summary Ollama tersimpan di database online.');
+
+        $run->refresh();
+        $this->assertSame('Ollama · llama3.2:3b', $run->summary_generated_by);
+        $this->assertStringContainsString('Ringkasan dari Ollama lokal.', $run->ai_summary);
+    }
+
+    public function test_online_summary_api_rejects_a_summary_for_stale_metrics(): void
+    {
+        config([
+            'services.summary_sync.token' => 'private-sync-token',
+            'services.ollama.model' => 'llama3.2:3b',
+        ]);
+        $run = $this->completedRun();
+        $oldFingerprint = $this->withToken('private-sync-token')
+            ->getJson('/api/local-ai/training-runs/'.$run->id)
+            ->json('metrics_fingerprint');
+
+        $run->update(['metrics' => array_merge($run->metrics, ['precision' => 0.99])]);
+
+        $this->withToken('private-sync-token')
+            ->putJson('/api/local-ai/training-runs/'.$run->id.'/summary', [
+                'ai_summary' => 'Summary dari metrics lama.',
+                'summary_generated_by' => 'Ollama · llama3.2:3b',
+                'metrics_fingerprint' => $oldFingerprint,
+            ])
+            ->assertConflict();
+
+        $this->assertNull($run->refresh()->ai_summary);
+    }
+
+    public function test_local_summary_action_can_use_online_metrics_and_push_to_online_database(): void
+    {
+        config([
+            'services.ollama.enabled' => true,
+            'services.ollama.url' => 'http://ollama.test',
+            'services.ollama.model' => 'llama3.2:3b',
+            'services.summary_sync.url' => 'https://dashboard.test',
+            'services.summary_sync.token' => 'private-sync-token',
+        ]);
+        $run = $this->completedRun();
+        $remoteRun = $run->only([
+            'id', 'name', 'model_version', 'status', 'dataset_name', 'epochs',
+            'batch_size', 'image_size', 'optimizer', 'device', 'metrics',
+            'per_class_metrics',
+        ]);
+
+        Http::fake(function ($request) use ($remoteRun) {
+            if ($request->method() === 'GET') {
+                return Http::response([
+                    'run' => $remoteRun,
+                    'metrics_fingerprint' => str_repeat('a', 64),
+                    'summary_url' => 'https://dashboard.test/experiments/1/summary',
+                ]);
+            }
+
+            if ($request->url() === 'http://ollama.test/api/generate') {
+                return Http::response(['response' => json_encode([
+                    'performance_summary' => 'Masker merupakan kelas terlemah yang perlu diprioritaskan.',
+                    'operational_risk' => 'False negative masker perlu dipantau.',
+                    'recommendations' => [
+                        'Tambah variasi data masker.',
+                        'Analisis confusion matrix.',
+                        'Uji confidence threshold di lapangan.',
+                    ],
+                ])]);
+            }
+
+            return Http::response([
+                'message' => 'Summary Ollama tersimpan di database online.',
+                'summary_url' => 'https://dashboard.test/experiments/1/summary',
+            ]);
+        });
+
+        $this->post(route('summary.generate', $run))
+            ->assertRedirect('https://dashboard.test/experiments/1/summary');
+
+        $run->refresh();
+        $this->assertNull($run->ai_summary);
+        Http::assertSent(fn ($request) => $request->method() === 'PUT'
+            && $request['summary_generated_by'] === 'Ollama · llama3.2:3b'
+            && $request['metrics_fingerprint'] === str_repeat('a', 64));
+    }
+
     public function test_training_metrics_can_be_imported_manually(): void
     {
         $run = TrainingRun::create([

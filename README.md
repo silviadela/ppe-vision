@@ -114,6 +114,31 @@ OLLAMA_MODEL=llama3.2:3b
 
 Setelah mengubah `.env`, jalankan `php artisan config:clear`.
 
-Karena InfinityFree tidak dapat mengakses Ollama pada komputer pengguna, ringkasan yang sudah dibuat secara lokal disimpan di database dan ditampilkan secara read-only pada hosting online. Untuk membuktikan proses generasi, jalankan Laravel dan Ollama secara lokal lalu gunakan aksi pembuatan ulang summary dalam mode development.
+Karena InfinityFree tidak dapat mengakses Ollama pada komputer pengguna, proses AI dijalankan oleh Laravel lokal. Hasil yang lolos validasi dapat dikirim melalui API bertoken ke MySQL InfinityFree dan kemudian ditampilkan secara read-only pada dashboard online.
+
+### Sinkronisasi Ollama lokal ke database online
+
+Mode sinkronisasi memakai MySQL InfinityFree sebagai satu-satunya sumber data operasional. Laravel lokal mengambil metrics terbaru melalui API bertoken, meminta Ollama lokal membuat analisis, lalu mengirim summary tervalidasi kembali ke record MySQL yang sama. SQLite hanya dipakai untuk development dan test otomatis; Streamlit, YOLO, dan Ollama tidak memiliki database tambahan.
+
+Tambahkan token acak yang sama pada `.env` InfinityFree dan `.env` lokal. Pada `.env` lokal tambahkan juga URL dashboard:
+
+```dotenv
+SUMMARY_SYNC_URL=https://ppe-vision.infinityfreeapp.com
+SUMMARY_SYNC_TOKEN=TOKEN_ACAK_YANG_SAMA
+```
+
+Pada `.env` InfinityFree:
+
+```dotenv
+SUMMARY_SYNC_TOKEN=TOKEN_ACAK_YANG_SAMA
+```
+
+Setelah konfigurasi server terbaru diunggah, jalankan `php artisan config:clear`, pastikan Ollama aktif, lalu gunakan tombol **Buat ulang dengan Ollama** pada localhost atau perintah berikut:
+
+```bash
+php artisan summary:sync-online 1
+```
+
+API menolak token yang salah, label mesin selain model Ollama yang dikonfigurasi, dan summary yang dibuat dari metrics lama. Token tidak boleh dimasukkan ke repository.
 
 > Metrics pada seeder berasal dari model final YOLO26s yang aktif dan evaluasi test independen di dalam paket Dataset 4.

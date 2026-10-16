@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\TrainingRun;
 use App\Services\MetricSummaryService;
+use App\Services\OnlineSummarySyncService;
 use Throwable;
 
 class SummaryController extends Controller
@@ -13,19 +14,32 @@ class SummaryController extends Controller
         return view('summary.show', ['run' => $trainingRun]);
     }
 
-    public function generate(TrainingRun $trainingRun, MetricSummaryService $service)
-    {
+    public function generate(
+        int $trainingRun,
+        MetricSummaryService $service,
+        OnlineSummarySyncService $onlineSync,
+    ) {
         abort_unless(config('deployment.allow_admin_writes'), 404);
-        abort_if(empty($trainingRun->metrics), 422, 'Metrics belum tersedia.');
+
         try {
-            $summary = $service->generate($trainingRun);
+            if ($onlineSync->configured()) {
+                $result = $onlineSync->generateAndPush($trainingRun);
+
+                return $result['summary_url']
+                    ? redirect()->away($result['summary_url'])
+                    : back()->with('success', 'Summary Ollama berhasil disimpan ke dashboard online.');
+            }
+
+            $localRun = TrainingRun::findOrFail($trainingRun);
+            abort_if(empty($localRun->metrics), 422, 'Metrics belum tersedia.');
+            $summary = $service->generate($localRun);
         } catch (Throwable $exception) {
             report($exception);
 
             return back()->with('error', $exception->getMessage());
         }
 
-        $trainingRun->update([
+        $localRun->update([
             'ai_summary' => $summary['text'],
             'summary_generated_by' => $summary['engine'],
         ]);
