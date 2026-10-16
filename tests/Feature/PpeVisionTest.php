@@ -332,7 +332,7 @@ class PpeVisionTest extends TestCase
         $this->assertNull($run->refresh()->ai_summary);
     }
 
-    public function test_local_summary_action_can_use_online_metrics_and_push_to_online_database(): void
+    public function test_optional_api_command_can_use_online_metrics_and_push_to_online_database(): void
     {
         config([
             'services.ollama.enabled' => true,
@@ -375,8 +375,8 @@ class PpeVisionTest extends TestCase
             ]);
         });
 
-        $this->post(route('summary.generate', $run))
-            ->assertRedirect('https://dashboard.test/experiments/1/summary');
+        $this->artisan('summary:sync-online', ['run' => $run->id])
+            ->assertSuccessful();
 
         $run->refresh();
         $this->assertNull($run->ai_summary);

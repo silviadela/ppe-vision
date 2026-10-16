@@ -118,12 +118,11 @@ Karena InfinityFree tidak dapat mengakses Ollama pada komputer pengguna, proses 
 
 ### Sinkronisasi Ollama lokal ke database online
 
-Mode sinkronisasi memakai MySQL InfinityFree sebagai satu-satunya sumber data operasional. Laravel lokal mengambil metrics terbaru melalui API bertoken, meminta Ollama lokal membuat analisis, lalu mengirim summary tervalidasi kembali ke record MySQL yang sama. SQLite hanya dipakai untuk development dan test otomatis; Streamlit, YOLO, dan Ollama tidak memiliki database tambahan.
+Mode sinkronisasi memakai MySQL InfinityFree sebagai satu-satunya sumber data operasional. SQLite hanya dipakai untuk development dan test otomatis; Streamlit, YOLO, dan Ollama tidak memiliki database tambahan.
 
-Tambahkan token acak yang sama pada `.env` InfinityFree dan `.env` lokal. Pada `.env` lokal tambahkan juga URL dashboard:
+Tambahkan token acak yang sama pada `.env` InfinityFree dan `.env` lokal:
 
 ```dotenv
-SUMMARY_SYNC_URL=https://ppe-vision.infinityfreeapp.com
 SUMMARY_SYNC_TOKEN=TOKEN_ACAK_YANG_SAMA
 ```
 
@@ -133,12 +132,31 @@ Pada `.env` InfinityFree:
 SUMMARY_SYNC_TOKEN=TOKEN_ACAK_YANG_SAMA
 ```
 
-Setelah konfigurasi server terbaru diunggah, jalankan `php artisan config:clear`, pastikan Ollama aktif, lalu gunakan tombol **Buat ulang dengan Ollama** pada localhost atau perintah berikut:
+#### InfinityFree gratis: sinkronisasi melalui browser
+
+InfinityFree gratis menampilkan browser security challenge pada request programatik. Karena itu, perintah API otomatis tidak dapat menerima JSON dari domain tersebut. Gunakan alur browser-assisted berikut:
+
+1. Buka `https://DOMAIN-ANDA/local-ai-sync/1` di browser.
+2. Pada langkah 1, masukkan token dan unduh `ppe-metrics-run-1.json`.
+3. Pastikan Ollama aktif, lalu di terminal project jalankan:
+
+```powershell
+php artisan summary:prepare-browser "C:\Users\NAMA\Downloads\ppe-metrics-run-1.json"
+```
+
+4. Kembali ke halaman sinkronisasi. Pada langkah 3, masukkan token dan unggah `storage/app/private/summary-sync-run-1.json`.
+5. Laravel online memvalidasi token, tanda tangan sumber, ID eksperimen, fingerprint metrics, label model Ollama, dan struktur summary sebelum menyimpan ke MySQL.
+
+File JSON hanya menjadi media transfer sementara dan bukan database. Metrics tetap berasal dari MySQL online, sedangkan teks analisis hanya dibuat oleh Ollama lokal.
+
+#### Hosting yang mendukung API
+
+Untuk hosting tanpa browser security challenge, alur API otomatis tetap tersedia. Isi juga `SUMMARY_SYNC_URL`, lalu jalankan:
 
 ```bash
 php artisan summary:sync-online 1
 ```
 
-API menolak token yang salah, label mesin selain model Ollama yang dikonfigurasi, dan summary yang dibuat dari metrics lama. Token tidak boleh dimasukkan ke repository.
+API dan alur browser sama-sama menolak token yang salah, label mesin selain model Ollama yang dikonfigurasi, dan summary yang dibuat dari metrics lama. Token tidak boleh dimasukkan ke repository.
 
 > Metrics pada seeder berasal dari model final YOLO26s yang aktif dan evaluasi test independen di dalam paket Dataset 4.
