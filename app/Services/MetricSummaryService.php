@@ -4,53 +4,61 @@ namespace App\Services;
 
 use App\Models\TrainingRun;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 use Throwable;
 
 class MetricSummaryService
 {
     public function generate(TrainingRun $run): array
     {
-        if (config('services.ollama.enabled')) {
-            try {
-                // Model lokal dapat membutuhkan lebih dari batas default PHP 60 detik
-                // saat pertama kali dimuat, khususnya pada mesin tanpa GPU diskret.
-                set_time_limit(210);
-
-                for ($attempt = 0; $attempt < 2; $attempt++) {
-                    $correction = $attempt === 1
-                        ? ' Respons sebelumnya tidak lolos validasi. Ikuti struktur dan urutan rekomendasi secara tepat; '
-                            .'jangan tulis angka, persentase, nama metrik, accuracy, atau akurasi.'
-                        : '';
-                    $response = Http::connectTimeout(5)->timeout(180)->post(rtrim(config('services.ollama.url'), '/').'/api/generate', [
-                        'model' => config('services.ollama.model'),
-                        'stream' => false,
-                        'prompt' => $this->prompt($run).$correction,
-                        'format' => $this->responseSchema(),
-                        'options' => [
-                            'temperature' => 0.1,
-                            'num_predict' => 360,
-                        ],
-                    ])->throw()->json();
-
-                    if (! empty($response['response'])) {
-                        $text = $this->formatOllamaResponse($run, $response['response']);
-
-                        // Jangan memberi label Ollama jika respons tidak lolos validasi.
-                        // Satu percobaan koreksi menjaga demo model kecil tetap konsisten.
-                        if ($text !== null) {
-                            return [
-                                'text' => $text,
-                                'engine' => 'Ollama · '.config('services.ollama.model'),
-                            ];
-                        }
-                    }
-                }
-            } catch (Throwable $exception) {
-                report($exception);
-            }
+        if (! config('services.ollama.enabled')) {
+            throw new RuntimeException('Ollama lokal belum diaktifkan. Summary tidak diubah.');
         }
 
-        return ['text' => $this->localSummary($run), 'engine' => 'Analisis lokal berbasis aturan (bukan LLM)'];
+        try {
+            // Model lokal dapat membutuhkan lebih dari batas default PHP 60 detik
+            // saat pertama kali dimuat, khususnya pada mesin tanpa GPU diskret.
+            set_time_limit(210);
+
+            for ($attempt = 0; $attempt < 2; $attempt++) {
+                $correction = $attempt === 1
+                    ? ' Respons sebelumnya tidak lolos validasi. Ikuti struktur dan urutan rekomendasi secara tepat; '
+                        .'jangan tulis angka, persentase, nama metrik, accuracy, atau akurasi.'
+                    : '';
+                $response = Http::connectTimeout(5)->timeout(180)->post(rtrim(config('services.ollama.url'), '/').'/api/generate', [
+                    'model' => config('services.ollama.model'),
+                    'stream' => false,
+                    'prompt' => $this->prompt($run).$correction,
+                    'format' => $this->responseSchema(),
+                    'options' => [
+                        'temperature' => 0.1,
+                        'num_predict' => 420,
+                    ],
+                ])->throw()->json();
+
+                if (! empty($response['response'])) {
+                    $text = $this->formatOllamaResponse($run, $response['response']);
+
+                    // Jangan memberi label Ollama jika respons tidak lolos validasi.
+                    // Satu percobaan koreksi menjaga demo model kecil tetap konsisten.
+                    if ($text !== null) {
+                        return [
+                            'text' => $text,
+                            'engine' => 'Ollama · '.config('services.ollama.model'),
+                        ];
+                    }
+                }
+            }
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                'Ollama lokal tidak dapat dihubungi atau berhenti sebelum selesai. Summary lama dipertahankan.',
+                previous: $exception,
+            );
+        }
+
+        throw new RuntimeException(
+            'Respons Ollama belum memenuhi format analisis setelah dua percobaan. Summary lama dipertahankan.',
+        );
     }
 
     private function prompt(TrainingRun $run): string
@@ -85,7 +93,8 @@ class MetricSummaryService
             .'dalam Bahasa Indonesia berdasarkan data yang diberikan. Jangan menulis angka, persentase, istilah accuracy/akurasi, '
             .'atau mengulang nama metrik yang mengandung angka; '
             .'aplikasi akan menampilkan seluruh angka secara otomatis dari database. '
-            .'Kelas terlemah sudah dihitung pada weakest_class_by_map50_95; risiko dan saran harus berfokus pada kelas tersebut. '
+            .'Kelas terlemah sudah dihitung pada weakest_class_by_map50_95. Isi performance_summary maksimal dua kalimat '
+            .'yang merangkum kualitas model secara kualitatif dan menyebut kelas terlemah. '
             .'Isi operational_risk maksimal dua kalimat tanpa mengulang kesimpulan metrik. Isi recommendations '
             .'dengan tepat tiga saran singkat: perbaikan data untuk kelas terlemah, analisis false negative/confusion matrix, '
             .'dan pengujian confidence threshold pada kondisi lapangan. Hindari pengulangan dan jangan menyarankan mengganti model tanpa bukti. Data: '
@@ -97,6 +106,7 @@ class MetricSummaryService
         return [
             'type' => 'object',
             'properties' => [
+                'performance_summary' => ['type' => 'string'],
                 'operational_risk' => ['type' => 'string'],
                 'recommendations' => [
                     'type' => 'array',
@@ -105,7 +115,7 @@ class MetricSummaryService
                     'maxItems' => 3,
                 ],
             ],
-            'required' => ['operational_risk', 'recommendations'],
+            'required' => ['performance_summary', 'operational_risk', 'recommendations'],
         ];
     }
 
@@ -113,16 +123,21 @@ class MetricSummaryService
     {
         $content = json_decode($response, true);
         if (! is_array($content)
+            || ! is_string($content['performance_summary'] ?? null)
             || ! is_string($content['operational_risk'] ?? null)
             || ! is_array($content['recommendations'] ?? null)) {
             return null;
         }
 
         $normalizeTerminology = fn (string $text) => preg_replace(
-            '/\b(?:accuracy|akurasi)\b/iu',
-            'kinerja deteksi',
+            [
+                '/\b(?:accuracy|akurasi|keakuratan)\s+deteksi\b/iu',
+                '/\b(?:accuracy|akurasi|keakuratan)\b/iu',
+            ],
+            ['kinerja deteksi', 'kinerja deteksi'],
             trim($text),
         );
+        $performanceSummary = $normalizeTerminology($content['performance_summary']);
         $risk = $normalizeTerminology($content['operational_risk']);
         $recommendations = collect($content['recommendations'])
             ->filter(fn ($item) => is_string($item) && trim($item) !== '')
@@ -130,7 +145,9 @@ class MetricSummaryService
             ->take(3)
             ->values();
 
-        if ($risk === ''
+        if ($performanceSummary === ''
+            || strlen($performanceSummary) > 1200
+            || $risk === ''
             || strlen($risk) > 1200
             || count($content['recommendations']) !== 3
             || $recommendations->count() !== 3
@@ -144,7 +161,7 @@ class MetricSummaryService
             ->keys()
             ->first();
         $recommendations = $recommendations->all();
-        $generatedText = strtolower($risk.' '.implode(' ', $recommendations));
+        $generatedText = strtolower($performanceSummary.' '.$risk.' '.implode(' ', $recommendations));
         // Nama metrik seperti mAP50 atau mAP50-95 bukan klaim angka baru.
         // Hapus token tersebut sebelum memeriksa digit agar nilai buatan LLM
         // tetap ditolak tanpa membuang respons yang secara semantik valid.
@@ -158,26 +175,18 @@ class MetricSummaryService
 
         return $this->structuredSummary(
             $run,
+            $performanceSummary,
             $risk,
             $recommendations,
         );
     }
 
-    private function localSummary(TrainingRun $run): string
-    {
-        return $this->structuredSummary(
-            $run,
-            'Risiko utama adalah false negative pada objek kecil, tertutup sebagian, atau berada dalam pencahayaan rendah.',
-            [
-                'Tambah variasi data untuk kelas terlemah, terutama objek kecil, sudut berbeda, dan kondisi cahaya rendah.',
-                'Tinjau false negative dan confusion matrix sebelum model dipakai pada kondisi nyata.',
-                'Uji beberapa confidence threshold pada video lapangan untuk menyeimbangkan false positive dan false negative.',
-            ],
-        );
-    }
-
-    private function structuredSummary(TrainingRun $run, string $risk, array $recommendations): string
-    {
+    private function structuredSummary(
+        TrainingRun $run,
+        string $performanceSummary,
+        string $risk,
+        array $recommendations,
+    ): string {
         $percentage = fn ($value) => number_format((float) $value * 100, 1, ',', '.').'%';
         $metrics = $run->metrics ?? [];
         $classes = collect($run->per_class_metrics ?? [])
@@ -217,7 +226,8 @@ class MetricSummaryService
             ->map(fn ($item, $index) => ($index + 1).'. '.trim((string) $item))
             ->implode("\n");
 
-        return "### Kesimpulan\n{$conclusion}"
+        return "### Kesimpulan AI\n{$performanceSummary}"
+            ."\n\n### Metrik tervalidasi dari database\n{$conclusion}"
             ."\n\n### {$classMetricLabel} per kelas\n{$classMetrics}"
             ."\n\n### Kelas yang perlu perhatian\n{$weakestText}"
             ."\n\n### Risiko operasional\n{$risk}"

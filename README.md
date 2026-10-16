@@ -102,7 +102,7 @@ Setelah layanan inferensi aktif, simpan URL `https://...streamlit.app` pada `STR
 
 ## Ringkasan lokal dengan Ollama
 
-Implementasi final menggunakan Ollama lokal untuk menyusun risiko operasional dan tiga rekomendasi dari metrik model. Laravel tetap menghitung serta menampilkan seluruh angka dari database agar LLM tidak menjadi sumber nilai evaluasi. Jika Ollama tidak aktif, tidak dapat dihubungi, atau responsnya tidak lolos validasi, aplikasi memberi label yang jujur dan memakai fallback berbasis aturan.
+Implementasi final menggunakan Ollama lokal untuk menyusun kesimpulan kualitatif, risiko operasional, dan tiga rekomendasi dari metrik model. Laravel mengirim metrik yang benar kepada Ollama serta tetap menampilkan angka dari database agar LLM tidak menjadi sumber nilai evaluasi. Jika Ollama tidak aktif, tidak dapat dihubungi, atau responsnya tidak lolos validasi setelah percobaan koreksi, summary lama dipertahankan dan aplikasi menampilkan error. Tidak ada summary baru berbasis aturan.
 
 Konfigurasi lokal:
 

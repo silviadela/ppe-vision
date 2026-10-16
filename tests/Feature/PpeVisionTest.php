@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Detection;
 use App\Models\TrainingRun;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -87,22 +88,44 @@ class PpeVisionTest extends TestCase
         $this->assertDatabaseMissing('training_runs', ['name' => 'Colab Run 02']);
     }
 
-    public function test_summary_uses_local_analysis_when_ollama_is_disabled(): void
+    public function test_summary_is_not_replaced_when_ollama_is_disabled(): void
     {
         config(['services.ollama.enabled' => false]);
         $run = $this->completedRun();
+        $run->update([
+            'ai_summary' => 'Ringkasan Ollama sebelumnya.',
+            'summary_generated_by' => 'Ollama · llama3.2:3b',
+        ]);
 
-        $this->post(route('summary.generate', $run))->assertRedirect();
+        $this->post(route('summary.generate', $run))
+            ->assertRedirect()
+            ->assertSessionHas('error');
 
         $run->refresh();
-        $this->assertNotNull($run->ai_summary);
-        $this->assertSame('Analisis lokal berbasis aturan (bukan LLM)', $run->summary_generated_by);
-        $this->assertStringContainsString('Masker', $run->ai_summary);
+        $this->assertSame('Ringkasan Ollama sebelumnya.', $run->ai_summary);
+        $this->assertSame('Ollama · llama3.2:3b', $run->summary_generated_by);
     }
 
     public function test_summary_reads_map50_per_class_from_latest_checkpoint(): void
     {
-        config(['services.ollama.enabled' => false]);
+        config([
+            'services.ollama.enabled' => true,
+            'services.ollama.url' => 'http://ollama.test',
+            'services.ollama.model' => 'llama3.2:3b',
+        ]);
+        Http::fake([
+            'http://ollama.test/api/generate' => Http::response([
+                'response' => json_encode([
+                    'performance_summary' => 'People menjadi kelas terlemah dan perlu diprioritaskan.',
+                    'operational_risk' => 'False negative people dapat membuat pekerja tidak terpantau.',
+                    'recommendations' => [
+                        'Tambah variasi data people.',
+                        'Analisis confusion matrix.',
+                        'Uji confidence threshold di lapangan.',
+                    ],
+                ]),
+            ]),
+        ]);
         $run = $this->completedRun();
         $run->update([
             'per_class_metrics' => [
@@ -129,6 +152,7 @@ class PpeVisionTest extends TestCase
         Http::fake([
             'http://ollama.test/api/generate' => Http::response([
                 'response' => json_encode([
+                    'performance_summary' => 'Masker merupakan kelas terlemah yang perlu diprioritaskan.',
                     'operational_risk' => 'False negative masker perlu dipantau.',
                     'recommendations' => [
                         'Tambah variasi data masker.',
@@ -144,16 +168,17 @@ class PpeVisionTest extends TestCase
 
         $run->refresh();
         $this->assertSame('Ollama · llama3.2:3b', $run->summary_generated_by);
-        $this->assertStringContainsString('### Kesimpulan', $run->ai_summary);
+        $this->assertStringContainsString('### Kesimpulan AI', $run->ai_summary);
+        $this->assertStringContainsString('### Metrik tervalidasi dari database', $run->ai_summary);
         $this->assertStringContainsString('### mAP50-95 per kelas', $run->ai_summary);
         $this->assertStringContainsString('Masker: 59,8%', $run->ai_summary);
         $this->assertStringContainsString('### Rekomendasi', $run->ai_summary);
         $this->assertStringContainsString('3. Uji confidence threshold di lapangan.', $run->ai_summary);
         Http::assertSent(fn ($request) => $request['stream'] === false
-            && $request['format']['required'] === ['operational_risk', 'recommendations']);
+            && $request['format']['required'] === ['performance_summary', 'operational_risk', 'recommendations']);
     }
 
-    public function test_invalid_ollama_response_is_labelled_as_rule_based_fallback(): void
+    public function test_invalid_ollama_response_preserves_existing_summary(): void
     {
         config([
             'services.ollama.enabled' => true,
@@ -169,12 +194,18 @@ class PpeVisionTest extends TestCase
             ]),
         ]);
         $run = $this->completedRun();
+        $run->update([
+            'ai_summary' => 'Ringkasan Ollama sebelumnya.',
+            'summary_generated_by' => 'Ollama · model-lama',
+        ]);
 
-        $this->post(route('summary.generate', $run))->assertRedirect();
+        $this->post(route('summary.generate', $run))
+            ->assertRedirect()
+            ->assertSessionHas('error');
 
         $run->refresh();
-        $this->assertSame('Analisis lokal berbasis aturan (bukan LLM)', $run->summary_generated_by);
-        $this->assertStringContainsString('### Risiko operasional', $run->ai_summary);
+        $this->assertSame('Ollama · model-lama', $run->summary_generated_by);
+        $this->assertSame('Ringkasan Ollama sebelumnya.', $run->ai_summary);
     }
 
     public function test_ollama_metric_names_are_not_mistaken_for_hallucinated_numbers(): void
@@ -187,6 +218,7 @@ class PpeVisionTest extends TestCase
         Http::fake([
             'http://ollama.test/api/generate' => Http::response([
                 'response' => json_encode([
+                    'performance_summary' => 'Masker paling lemah berdasarkan mAP50_95 dan perlu diprioritaskan.',
                     'operational_risk' => 'Kelas masker berisiko karena mAP50_95 relatif rendah.',
                     'recommendations' => [
                         'Perbaiki variasi data masker untuk meningkatkan akurasi model.',
@@ -207,7 +239,7 @@ class PpeVisionTest extends TestCase
         $this->assertStringNotContainsString('akurasi', strtolower($run->ai_summary));
     }
 
-    public function test_ollama_gets_one_corrective_retry_before_rule_based_fallback(): void
+    public function test_ollama_gets_one_corrective_retry_before_reporting_failure(): void
     {
         config([
             'services.ollama.enabled' => true,
@@ -221,6 +253,7 @@ class PpeVisionTest extends TestCase
                     'recommendations' => ['Saran tunggal.'],
                 ])])
                 ->push(['response' => json_encode([
+                    'performance_summary' => 'Masker merupakan kelas terlemah yang perlu diprioritaskan.',
                     'operational_risk' => 'False negative masker perlu dipantau.',
                     'recommendations' => [
                         'Tambah variasi data masker.',
@@ -333,7 +366,7 @@ class PpeVisionTest extends TestCase
     public function test_production_detection_failure_does_not_expose_internal_error(): void
     {
         Storage::fake('public');
-        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+        $this->withoutMiddleware(ValidateCsrfToken::class);
         $this->app->detectEnvironment(fn () => 'production');
         config(['services.yolo.url' => 'http://yolo.test']);
         Http::fake([
