@@ -137,11 +137,22 @@ class SummaryExchangeService
 
     private function fingerprintFromData(array $run): string
     {
-        return hash('sha256', json_encode([
-            'model_version' => $run['model_version'] ?? null,
-            'metrics' => $run['metrics'] ?? null,
-            'per_class_metrics' => $run['per_class_metrics'] ?? null,
-        ], JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR));
+        // InfinityFree memakai serialize_precision=53, sedangkan banyak instalasi
+        // PHP lokal memakai -1. Paksa representasi float yang sama agar angka
+        // identik tidak menghasilkan fingerprint berbeda antar-server.
+        $previousPrecision = ini_get('serialize_precision');
+
+        try {
+            ini_set('serialize_precision', '53');
+
+            return hash('sha256', json_encode([
+                'model_version' => $run['model_version'] ?? null,
+                'metrics' => $run['metrics'] ?? null,
+                'per_class_metrics' => $run['per_class_metrics'] ?? null,
+            ], JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR));
+        } finally {
+            ini_set('serialize_precision', (string) $previousPrecision);
+        }
     }
 
     private function sourceSignature(int $runId, string $fingerprint): string

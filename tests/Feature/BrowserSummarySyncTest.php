@@ -61,6 +61,32 @@ class BrowserSummarySyncTest extends TestCase
         $this->assertSame(64, strlen($payload['source_signature']));
     }
 
+    public function test_metrics_fingerprint_is_stable_across_php_float_precision_settings(): void
+    {
+        $run = $this->completedRun();
+        $exchange = app(SummaryExchangeService::class);
+        $previousPrecision = ini_get('serialize_precision');
+
+        try {
+            ini_set('serialize_precision', '53');
+            $downloadedJson = json_encode(
+                $exchange->metricsPackage($run),
+                JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR,
+            );
+
+            ini_set('serialize_precision', '-1');
+            $validated = $exchange->validateMetricsPackage(json_decode(
+                $downloadedJson,
+                true,
+                flags: JSON_THROW_ON_ERROR,
+            ));
+        } finally {
+            ini_set('serialize_precision', (string) $previousPrecision);
+        }
+
+        $this->assertSame($run->id, $validated['run']['id']);
+    }
+
     public function test_local_command_creates_a_valid_ollama_result_file_without_a_database_write(): void
     {
         Storage::fake('local');
