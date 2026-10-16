@@ -177,6 +177,67 @@ class PpeVisionTest extends TestCase
         $this->assertStringContainsString('### Risiko operasional', $run->ai_summary);
     }
 
+    public function test_ollama_metric_names_are_not_mistaken_for_hallucinated_numbers(): void
+    {
+        config([
+            'services.ollama.enabled' => true,
+            'services.ollama.url' => 'http://ollama.test',
+            'services.ollama.model' => 'llama3.2:3b',
+        ]);
+        Http::fake([
+            'http://ollama.test/api/generate' => Http::response([
+                'response' => json_encode([
+                    'operational_risk' => 'Kelas masker berisiko karena mAP50_95 relatif rendah.',
+                    'recommendations' => [
+                        'Perbaiki variasi data masker untuk meningkatkan akurasi model.',
+                        'Tinjau false negative pada confusion matrix.',
+                        'Uji confidence threshold dalam kondisi lapangan.',
+                    ],
+                ]),
+            ]),
+        ]);
+        $run = $this->completedRun();
+
+        $this->post(route('summary.generate', $run))->assertRedirect();
+
+        $run->refresh();
+        $this->assertSame('Ollama · llama3.2:3b', $run->summary_generated_by);
+        $this->assertStringContainsString('mAP50_95', $run->ai_summary);
+        $this->assertStringContainsString('kinerja deteksi model', $run->ai_summary);
+        $this->assertStringNotContainsString('akurasi', strtolower($run->ai_summary));
+    }
+
+    public function test_ollama_gets_one_corrective_retry_before_rule_based_fallback(): void
+    {
+        config([
+            'services.ollama.enabled' => true,
+            'services.ollama.url' => 'http://ollama.test',
+            'services.ollama.model' => 'llama3.2:3b',
+        ]);
+        Http::fake([
+            'http://ollama.test/api/generate' => Http::sequence()
+                ->push(['response' => json_encode([
+                    'operational_risk' => 'Respons pertama tidak valid.',
+                    'recommendations' => ['Saran tunggal.'],
+                ])])
+                ->push(['response' => json_encode([
+                    'operational_risk' => 'False negative masker perlu dipantau.',
+                    'recommendations' => [
+                        'Tambah variasi data masker.',
+                        'Analisis confusion matrix.',
+                        'Uji confidence threshold di lapangan.',
+                    ],
+                ])]),
+        ]);
+        $run = $this->completedRun();
+
+        $this->post(route('summary.generate', $run))->assertRedirect();
+
+        $run->refresh();
+        $this->assertSame('Ollama · llama3.2:3b', $run->summary_generated_by);
+        Http::assertSentCount(2);
+    }
+
     public function test_training_metrics_can_be_imported_manually(): void
     {
         $run = TrainingRun::create([

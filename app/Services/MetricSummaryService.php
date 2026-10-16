@@ -16,27 +16,33 @@ class MetricSummaryService
                 // saat pertama kali dimuat, khususnya pada mesin tanpa GPU diskret.
                 set_time_limit(210);
 
-                $response = Http::connectTimeout(5)->timeout(180)->post(rtrim(config('services.ollama.url'), '/').'/api/generate', [
-                    'model' => config('services.ollama.model'),
-                    'stream' => false,
-                    'prompt' => $this->prompt($run),
-                    'format' => $this->responseSchema(),
-                    'options' => [
-                        'temperature' => 0.2,
-                        'num_predict' => 360,
-                    ],
-                ])->throw()->json();
+                for ($attempt = 0; $attempt < 2; $attempt++) {
+                    $correction = $attempt === 1
+                        ? ' Respons sebelumnya tidak lolos validasi. Ikuti struktur dan urutan rekomendasi secara tepat; '
+                            .'jangan tulis angka, persentase, nama metrik, accuracy, atau akurasi.'
+                        : '';
+                    $response = Http::connectTimeout(5)->timeout(180)->post(rtrim(config('services.ollama.url'), '/').'/api/generate', [
+                        'model' => config('services.ollama.model'),
+                        'stream' => false,
+                        'prompt' => $this->prompt($run).$correction,
+                        'format' => $this->responseSchema(),
+                        'options' => [
+                            'temperature' => 0.1,
+                            'num_predict' => 360,
+                        ],
+                    ])->throw()->json();
 
-                if (! empty($response['response'])) {
-                    $text = $this->formatOllamaResponse($run, $response['response']);
+                    if (! empty($response['response'])) {
+                        $text = $this->formatOllamaResponse($run, $response['response']);
 
-                    // Jangan memberi label Ollama jika respons tidak lolos validasi
-                    // dan aplikasi harus menggunakan ringkasan berbasis aturan.
-                    if ($text !== null) {
-                        return [
-                            'text' => $text,
-                            'engine' => 'Ollama · '.config('services.ollama.model'),
-                        ];
+                        // Jangan memberi label Ollama jika respons tidak lolos validasi.
+                        // Satu percobaan koreksi menjaga demo model kecil tetap konsisten.
+                        if ($text !== null) {
+                            return [
+                                'text' => $text,
+                                'engine' => 'Ollama · '.config('services.ollama.model'),
+                            ];
+                        }
                     }
                 }
             } catch (Throwable $exception) {
@@ -76,7 +82,8 @@ class MetricSummaryService
         ];
 
         return 'Anda adalah analis computer vision. Isi keluaran JSON terstruktur dengan analisis evaluasi model PPE '
-            .'dalam Bahasa Indonesia berdasarkan data yang diberikan. Jangan menulis angka, persentase, atau istilah accuracy; '
+            .'dalam Bahasa Indonesia berdasarkan data yang diberikan. Jangan menulis angka, persentase, istilah accuracy/akurasi, '
+            .'atau mengulang nama metrik yang mengandung angka; '
             .'aplikasi akan menampilkan seluruh angka secara otomatis dari database. '
             .'Kelas terlemah sudah dihitung pada weakest_class_by_map50_95; risiko dan saran harus berfokus pada kelas tersebut. '
             .'Isi operational_risk maksimal dua kalimat tanpa mengulang kesimpulan metrik. Isi recommendations '
@@ -111,10 +118,15 @@ class MetricSummaryService
             return null;
         }
 
-        $risk = trim($content['operational_risk']);
+        $normalizeTerminology = fn (string $text) => preg_replace(
+            '/\b(?:accuracy|akurasi)\b/iu',
+            'kinerja deteksi',
+            trim($text),
+        );
+        $risk = $normalizeTerminology($content['operational_risk']);
         $recommendations = collect($content['recommendations'])
             ->filter(fn ($item) => is_string($item) && trim($item) !== '')
-            ->map(fn ($item) => trim($item))
+            ->map(fn ($item) => $normalizeTerminology($item))
             ->take(3)
             ->values();
 
@@ -133,11 +145,14 @@ class MetricSummaryService
             ->first();
         $recommendations = $recommendations->all();
         $generatedText = strtolower($risk.' '.implode(' ', $recommendations));
+        // Nama metrik seperti mAP50 atau mAP50-95 bukan klaim angka baru.
+        // Hapus token tersebut sebelum memeriksa digit agar nilai buatan LLM
+        // tetap ditolak tanpa membuang respons yang secara semantik valid.
+        $textWithoutMetricNames = preg_replace('/\bmap50(?:[-_]95)?\b/iu', '', $generatedText);
         if (($weakest && ! str_contains($generatedText, strtolower((string) $weakest)))
             || ! str_contains(strtolower($recommendations[1]), 'confusion')
             || ! str_contains(strtolower($recommendations[2]), 'confidence')
-            || str_contains($generatedText, 'akurasi')
-            || preg_match('/\d/u', $generatedText)) {
+            || preg_match('/\d/u', $textWithoutMetricNames)) {
             return null;
         }
 
